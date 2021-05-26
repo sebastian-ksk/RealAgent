@@ -66,11 +66,16 @@ class prescriptionMethods():
         elif (self.sp_rootdepth > self.L1) and (self.sp_rootdepth<=self.L2):  
             self.deficit=(((self.fieldCapacity-self.WC1)*(self.L1/100))+((self.fieldCapacity-self.WC2)*((self.sp_rootdepth-self.L1)/100)))*1000
             self.dTaw=((self.fieldCapacity-self.pwp)/100)*self.L1*1000  + ((self.fieldCapacity-self.pwp)/100)*(self.sp_rootdepth-self.L1)*1000
+        else:
+            self.deficit = 0 #flata verificar este dato
+            self.dTaw = 0
+        
         self.deficit=round(self.deficit,4)  
         if self.deficit<0:
            self.deficit=0
         else:
             pass    
+
         self.mad=self.dTaw*self.sp_mae  
         if self.deficit>= self.mad:   
             self.irr_pres_net =self.deficit # (mm)
@@ -115,12 +120,15 @@ class prescriptionMethods():
             self.k=0.0  
 
         self.effectiveRain=self.RainD*self.k
-                                                        
+                                                 
         self.dTaw=((self.fieldCapacity -self.pwp)/100)*self.sp_rootdepth*1000  #conversion a metros
         self.mad=self.dTaw*self.sp_mae  #coeficiente 
-        self.Ks= (self.dTaw-self.depletion)/(self.dTaw*(1-self.sp_mae))
-        self.ETcadj=self.Ks*self.ETc  #self.ETc ajustado	
+        if self.dTaw*(1-self.sp_mae) != 0:
+            self.Ks= (self.dTaw-self.depletion)/(self.dTaw*(1-self.sp_mae))
+        else:
+            self.Ks = 0
 
+        self.ETcadj=self.Ks*self.ETc  #self.ETc ajustado	
         if  self.Irrigation + self.effectiveRain > self.depletion+self.ETc:            
             self.deficit = 0.0
         else:
@@ -135,11 +143,11 @@ class prescriptionMethods():
             self.Irrigation_pres_net=0.0
 
         if self.crop.dayscrop >=130 and self.crop.typeCrop=='Onion':
-            self.irr_pres_net=0.0   
+            self.Irrigation_pres_net  
         
         self.depletion=self.deficit
         self._today, self._hour = str(datetime.now()).split()[0],str(datetime.now()).split()[1]
-        self.prescriptionResult.allDataPrescription = ['ET0-Moisture_Sensors',self._today,self._hour,self.irr_pres_net,self.deficit,
+        self.prescriptionResult.allDataPrescription = ['ET0-Moisture_Sensors',self._today,self._hour,self.Irrigation_pres_net,self.deficit,
         self.Kc,self.sp_rootdepth,self.dTaw,self.mad,self.Ks,self.ETcadj,self.effectiveRain,self.ETc]
         self.saveDataPrescription(self.pathStorage,self.prescriptionResult.allDataPrescription) 
         return self.Irrigation_pres_net

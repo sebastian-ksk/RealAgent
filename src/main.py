@@ -58,7 +58,7 @@ class Main():
         self.Mqtt = MqttComunication( self.agent)
         timedelay.sleep(5)
         print('---------XbeeCommunication --------------------')
-        self.xbeeComm=XbeeCommunication("/dev/ttyUSB0",9600,self.sensors)
+        self.xbeeComm=XbeeCommunication("/dev/ttyUSB0",9600,self.sensors,self.FB)
         self.subproces_Sens=Thread(target=self.xbeeComm.runCallback)
         self.subproces_Sens.daemon=True
         self.subproces_Sens.start()
@@ -68,25 +68,33 @@ class Main():
     def realAgentRun(self):
         while True:  
             
-            # print(self.xbeeComm.sensors.allSensors)
-            # print(self.sensors.allSensors)
-            # print(self.presc_Meth.sensors.allSensors)
-            #contador de dias
             self.today = date(datetime.now().year,datetime.now().month,datetime.now().day)
             self.cropModel.dayscrop = abs(self.today-self.cropModel.seedTime).days
-
             self.contWeeks = int(self.cropModel.dayscrop/7)+1
+            self.FB.CropDoc_ref.update({
+                    u'DaysCrop':self.cropModel.dayscrop     
+                }
+            )
 
             if self.FlagPrescriptionDone == False:
                 self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'
                 if  self.horNouwStr==self.cropModel.presctime: 
                     if self.Mqtt.FlagPetition == False:
                         self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
+                        self.FB.ResultIrrDoc_ref.update({
+                             u'NetPrescription':self.ActualPrescription,
+                             u'LastPrescriptionDate' :str(self.today)      
+                        })
                         print(f'Prescription= {self.ActualPrescription}')
                         self.FlagPrescriptionDone=True       
                 if  self.Mqtt.FlagPetition==True:
                     if self.FlagPrescriptionDone == False:
                         self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
+                        print(f'Prescription= {self.ActualPrescription}')
+                        self.FB.ResultIrrDoc_ref.update({
+                             u'NetPrescription':self.ActualPrescription,
+                             u'LastPrescriptionDate' :str(self.today)      
+                        })
                         self.FlagPrescriptionDone=True
                     self.Report_Agent = self.AgentReport()
                     self.Mqtt.client.publish(f"Ag/SanRafael/Bloque_1/{self.agent}",f"{self.Report_Agent}",qos=2)     
@@ -96,10 +104,16 @@ class Main():
                 if self.horNouwStr == self.cropModel.irrigationtime:
                     if self.Mqtt.FlagIrrigation == True:
                         print('sent irrigation')
+                        self.FB.ResultIrrDoc_ref.update({
+                            u'IrrigationState':'SENDORDER'
+                        })
                         self.xbeeComm.sendIrrigationOrder('SITASK', self.agent,self.ActualPrescription)
                         self.FlagPrescriptionDone = False
                         self.Mqtt.FlagIrrigation = False
                     elif self.Mqtt.FlagNewIrrigation == True :
+                        self.FB.ResultIrrDoc_ref.update({
+                            u'IrrigationState':'SENDORDER'
+                        })
                         self.xbeeComm.sendIrrigationOrder('SITASK', self.agent,self.ActualPrescription)
                         self.FlagPrescriptionDone = False
                         self.Mqtt.FlagIrrigation = False

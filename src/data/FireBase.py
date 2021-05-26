@@ -19,13 +19,14 @@ class FIREBASE_CLASS():
             'databaseURL': self.urlDatabase
         })  
         firestoreDb = firestore.client()
-        self.doc_ref = firestoreDb.collection(u'Agents').document(u''+f'{self.AgentName}')
+        self.CropDoc_ref = firestoreDb.collection(u''+f'{self.AgentName}').document(u'Crop')
+        self.IrrPresDoc_ref = firestoreDb.collection(u''+f'{self.AgentName}').document(u'Irrigation-Prescription')
+        self.ResultIrrDoc_ref= firestoreDb.collection(u''+f'{self.AgentName}').document(u'ResultIrrigation-Prescription')
+        self.SensorsDoc_ref= firestoreDb.collection(u''+f'{self.AgentName}').document(u'Sensors')
 
-        doc = self.doc_ref.get()
+        doc = self.CropDoc_ref.get()
         if doc.exists:
-            self.completeModel = doc.to_dict()
-            self.Crop = self.completeModel['Crop']
-            self.Irrig_Presc = self.completeModel['Irrigation/Prescription']    
+            self.Crop = doc.to_dict()
             #fecha de siembra/seed time
             self._dateseed = str(self.Crop['SeedDate']).split('/')
             self.cropModel.seedTime = date(int(self._dateseed[2]),int(self._dateseed[1]),int(self._dateseed[0]))
@@ -35,55 +36,69 @@ class FIREBASE_CLASS():
             self.cropModel.pointWp =  float(self.Crop['pwp'])
             #capacidad de campo / fiel capacity
             self.cropModel.FieldCap = float(self.Crop['field_capacity'])
+        else:
+            print(u' Crop No such document!')
+            self.CropDoc_ref.set({
+                u'TypeCrop' : 'Potato',
+                u'pwp' : 0,
+                u'field_capacity':0,
+                u'SeedDate': '1/1/2021',
+                u'daysCrop':0
+            })
+        doc = self.IrrPresDoc_ref.get()
+        if doc.exists:
+            self.Irrig_Presc = doc.to_dict()
             #riego-prescripcion/ irrigation-prescription
             self.cropModel.prescMode = self.Irrig_Presc['PrescriptionMethod']
             self.cropModel.presctime = self.Irrig_Presc['PrescriptionTime']
             self.cropModel.irrigationtime = self.Irrig_Presc['IrrigationTime']
-
         else:
-            print(u'No such document!')
-            self.doc_ref.set({
-                u'Crop':{
-                    u'TypeCrop' : '',
-                    u'pwp' : 0,
-                    u'field_capacity':0,
-                    u'SeedDate': '0/0/0',
-                },
-                u'Irrigation/Prescription':{
-                    u'IrrigationMethod': 'drip',
-                    u'constanFlow': 1,
-                    u'PrescriptionTime': '00:00',
-                    u'IrrigationTime': '00:00',
-                    u'PrescriptionMethod' : 'WeatherStation',
-                    u'manualValves' : "OFF"
-                },
-                u'ResultsIrrig/Prescript':{
-                    u'PrescriptionData':{
-                        u'LastPrescriptionDate': '0/0/0/',
-                        u'NetPrescription':0
-                    },
-                    u'IrrigationData': {
-                        u'LastIrrigationDate': '0/0/0/',
-                        u'irrigationApplied' : 0,
-                        u'IrrigationState' : 'off'
-                    },
-                u'SensorsStaus': {
-                    u'VWC1' :00,
-                    u'VWC1' :00,
-                    u'VWC1' :00,
-                    u'VWC1' :00,
-                    u'temperature' :00,
-                    u'CanopyTemperature':00,
-                    u'RH' : 00
-                }    
-                }
+            print(u' irrigation-prescription No such document!')
+            self.IrrPresDoc_ref.set({
+                u'IrrigationMethod': 'drip',
+                u'constanFlow': 1,
+                u'PrescriptionTime': '00:00',
+                u'IrrigationTime': '00:00',
+                u'PrescriptionMethod' : 'Weather_Station',
+                u'manualValves' : "OFF"
             })
-        
+        doc = self.ResultIrrDoc_ref.get()
+        if doc.exists:
+            pass
+        else:
+            self.ResultIrrDoc_ref.set({
+                u'LastPrescriptionDate': '0/0/0/',
+                u'NetPrescription':0,
+                u'LastIrrigationDate': '0/0/0/',
+                u'irrigationApplied' : 0,
+                u'IrrigationState' : 'off',
+                u'DaysCrop':0
+            })
+        doc = self.SensorsDoc_ref.get()
+        if doc.exists:
+            pass
+        else:
+            self.SensorsDoc_ref.set({
+                u''+f'{self.cropModel.seedTime}':{
+                    u'00:00:00':{
+                        u'VWC1' :0,
+                        u'VWC2' :0,
+                        u'VWC3' :0,
+                        u'VWC4' :0,
+                        u'temperature' :0,
+                        u'CanopyTemperature':0,
+                        u'RH' : 0,
+                        u'soilTemperature':0
+                    }
+                    
+                },
+            })    
+
     
 
         #changes to movil APP
-        self.docRefview = firestoreDb.collection(u'Agents').document(u''+f'{self.AgentName}')
-        self.IrrigationPrescription = self.docRefview.get().to_dict()['Irrigation/Prescription']
+        self.docRefview = firestoreDb.collection(u''+f'{self.AgentName}').document(u'Irrigation-Prescription')
+        self.IrrigationPrescription = self.docRefview.get().to_dict()
         self.callback_done = threading.Event() 
         doc_watch = self.docRefview.on_snapshot(self.on_snapshot) 
 
@@ -95,8 +110,8 @@ class FIREBASE_CLASS():
                 #print(f' paht: {change.document.to_dict()}')
                 self.changeData = change.document.to_dict()
                 print('change data ================== : ')
-                self.compare(self.IrrigationPrescription,self.changeData['Irrigation/Prescription'])
-                self.IrrigationPrescription = self.changeData['Irrigation/Prescription']
+                self.compare(self.IrrigationPrescription,self.changeData)
+                self.IrrigationPrescription = self.changeData
             elif change.type.name == 'REMOVED':
                 pass
         self.callback_done.set()    
