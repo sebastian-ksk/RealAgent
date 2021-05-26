@@ -17,7 +17,7 @@ class ApiServiceEstacionMet():
     def __init__(self,modelWeather):
         self.url = "https://api.weatherlink.com/v1/NoaaExt.json?user=001D0A0117A4&pass=multiagent&apiToken=6BA678C3A1844C6B9B9767F9543331A1"
         self.modelWeather = modelWeather
-        self.directory = '/home/pi/Desktop/Real_Agents_N1/src/storage/WheatherStationData.txt'
+        self.directory = '/home/pi/Desktop/RealAgent/src/storage/WheatherStationData.txt'
     '''=====================================================================================================================
             consulta de datos a las 12 de la noche para toma de datos diarios de la estacion
     =====================================================================================================================

@@ -13,7 +13,7 @@ class XbeeCommunication():
         self.XbeesValvesSystem={'Agent_1': '0013A20041573102', 
         'Agent_2': '0013A20040E8762A',
         'Agent_3': '0013A20040E7412C',
-        'Agent_4': '0013A20040DADF27'}
+        'Agent_4': '0013A20040E8816B'}
         print('xbee  ')
         self.sensors = sensors
         self.Path_Data = '/home/pi/Desktop/RealAgent/src/storage'
@@ -66,7 +66,9 @@ class XbeeCommunication():
         elif self.message[0]=="SENSORS":
             print('sensores')
             self.save_data_Xbee(f"{self.Path_Data}/Sensor_data.txt",self.message[1])
-            self.sensors.allSensors = [float(x) for x in self.message[1].split(';')]
+            self.messageSens = self.message[1].split('\x00')
+            print(str(self.messageSens[0]))
+            self.sensors.allSensors = [float(x) for x in str(self.messageSens[0]).split(';')]
             try:
                 self.FireBase.SensorsDoc_ref.update({
                         u''+f'{str(self.today)}':{

@@ -33,7 +33,7 @@ class Main():
         '''inicializacion de datos'''
         print('init data')
         self.groundDivision="SanRafael"
-        self.agent=1
+        self.agent=4
         self.FlagPrescriptionDone = False
         #estacion meteorlogica
         '''consulta a estacion metereologica a las 00:00 todos los dias '''
@@ -110,15 +110,17 @@ class Main():
                         self.xbeeComm.sendIrrigationOrder('SITASK', self.agent,self.ActualPrescription)
                         self.FlagPrescriptionDone = False
                         self.Mqtt.FlagIrrigation = False
+                        
                     elif self.Mqtt.FlagNewIrrigation == True :
                         self.FB.ResultIrrDoc_ref.update({
                             u'IrrigationState':'SENDORDER'
                         })
-                        self.xbeeComm.sendIrrigationOrder('SITASK', self.agent,self.ActualPrescription)
+                        self.xbeeComm.sendIrrigationOrder('SITASK', self.agent,self.Mqtt.NewPrescription)
                         self.FlagPrescriptionDone = False
                         self.Mqtt.FlagIrrigation = False
+                        self.Mqtt.FlagNewIrrigation = False
             
-            timedelay.sleep(5)
+            #timedelay.sleep(5)
 
     def AgentReport(self):
         self.prescData = self.prescriptionResult.allDataPrescription
