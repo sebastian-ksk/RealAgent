@@ -45,7 +45,10 @@ class MqttComunication():
                     self.FlagIrrigation=True                             #activa bandera de reigo por prescripcion local
                 elif self.data[1].split(";")[0]=="Neg":          #si es Neg
                     print('Autorizacion Negociada') 
-                    if  self.num_GroundDivision== int(self.data[1].split(";")[1]):
+                    print(self.data[1])
+                    if  self.num_GroundDivision == int(self.data[1].split(";")[1]):
+                       
                         self.NewPrescription = int(self.data[1].split(";")[2])      #se guarda el dato del nuevo valor de prescipcion 
+                        print(f'New Prescription = {self.NewPrescription}')
                         self.FlagNewIrrigation = True                            #se activa bandera de riego por negociacion
                 pass 

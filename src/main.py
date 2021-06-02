@@ -3,6 +3,8 @@ from data.FireBase import FIREBASE_CLASS
 from model.ModelVarMeTereologica import meteorologicalData as DatMet
 from model.ModelCultivo import Crop
 from model.ModelSensores import Sensors
+from model.ModelirrigProperties import irrigation_properties
+
 from model.ModelPrescriptionResult import PrescriptionResults
 from services.mqttComunication import MqttComunication
 from services.xbeeCommunication import XbeeCommunication
@@ -11,6 +13,7 @@ from services.PrescriptionMethods import prescriptionMethods
 '''
 librerias externas al sistema 
 '''
+
 
 from apscheduler.schedulers.background import BackgroundScheduler  #para programar tareas
 
@@ -35,24 +38,36 @@ class Main():
         self.groundDivision="SanRafael"
         self.agent=4
         self.FlagPrescriptionDone = False
+        self.fileRealIrrigAplication = '/home/pi/Desktop/RealAgent/src/storage/RealIrrigationApplication.txt'
+       
         #estacion meteorlogica
         '''consulta a estacion metereologica a las 00:00 todos los dias '''
         self.apiServiceMet = ApiServiceEstacionMet(DatMet)
         self.schedWeatherSatation = BackgroundScheduler()
-        self.schedWeatherSatation.add_job(self.apiServiceMet.checkStation, 'cron',  hour = 0, minute = 0)
+        self.schedWeatherSatation.add_job(self.apiServiceMet.checkStation, 'cron',  hour = 23, minute = 58)
         self.schedWeatherSatation.start()
+
+        self.schedRebootAgent = BackgroundScheduler()
+        self.schedRebootAgent.add_job(self.RebootAgent, 'cron',  hour = 15, minute = 45)
+        self.schedRebootAgent.start()
+
+        
         #modelo defaul del cultivo
         self.cropModel = Crop("Maize",20,80,"Moisture_Sensor",11,date(2020,1,1),'00:00',"00:00")
+        #modelo propiedades de riego
+        self.IrrigProperties = irrigation_properties()
+
+
         print('-- firebase -- ')
         #conexion a firebase y actualizacion de datos
-        self.FB=FIREBASE_CLASS(f'{self.groundDivision}_{self.agent}',self.cropModel)
+        self.FB=FIREBASE_CLASS(f'{self.groundDivision}_{self.agent}',self.cropModel,self.IrrigProperties)
         #Modelo de sensores 
         self.sensors = Sensors(self.cropModel.typeCrop,'0x000000000')
         print(f'niveles de sensores: { self.sensors._SensorsLevels}' )
         #Modelo Resultados de prescripciones
         self.prescriptionResult = PrescriptionResults('--',str(datetime.now()).split()[0],str(datetime.now()).split()[1],0,0,0,0,0,0,0,0,0,0) #resultados de prescripcion
         #modelo de metodos de prescripciones
-        self.presc_Meth =  prescriptionMethods(self.cropModel,self.sensors,self.prescriptionResult) #inicializacion de metodos de prescripcion
+        self.presc_Meth =  prescriptionMethods(self.cropModel,self.sensors,self.prescriptionResult,self.apiServiceMet) #inicializacion de metodos de prescripcion
         self.presc_Meth.Moisture_Sensor_Presc()
         '''========Inicializacion de Protocolos de comunicacion ====='''
         self.Mqtt = MqttComunication( self.agent)
@@ -66,15 +81,23 @@ class Main():
 
    
     def realAgentRun(self):
+        self.todayMemory =  date(2021,3,6)
+        #self.todayMemory = date(datetime.now().year,datetime.now().month,datetime.now().day)
+        self.IrrigAplied = 0
+        self.TotalPrescription = 0
+        self.FlagTotalPrescApplied= False
         while True:  
-            
             self.today = date(datetime.now().year,datetime.now().month,datetime.now().day)
-            self.cropModel.dayscrop = abs(self.today-self.cropModel.seedTime).days
-            self.contWeeks = int(self.cropModel.dayscrop/7)+1
-            self.FB.CropDoc_ref.update({
-                    u'DaysCrop':self.cropModel.dayscrop     
+            if self.today != self.todayMemory:
+                self.cropModel.dayscrop = abs(self.today-self.cropModel.seedTime).days
+                self.contWeeks = int(self.cropModel.dayscrop/7)+1
+                self.FB.CropDoc_ref.update({
+                    u'DaysCrop': int(self.cropModel.dayscrop)     
                 }
-            )
+                )
+                self.todayMemory = self.today
+            else:
+                pass    
 
             if self.FlagPrescriptionDone == False:
                 self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'
@@ -87,7 +110,7 @@ class Main():
                         })
                         print(f'Prescription= {self.ActualPrescription}')
                         self.FlagPrescriptionDone=True       
-                if  self.Mqtt.FlagPetition==True:
+                elif  self.Mqtt.FlagPetition==True:
                     if self.FlagPrescriptionDone == False:
                         self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
                         print(f'Prescription= {self.ActualPrescription}')
@@ -100,25 +123,40 @@ class Main():
                     self.Mqtt.client.publish(f"Ag/SanRafael/Bloque_1/{self.agent}",f"{self.Report_Agent}",qos=2)     
            
             elif self.FlagPrescriptionDone == True:
-                self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'
-                if self.horNouwStr == self.cropModel.irrigationtime:
-                    if self.Mqtt.FlagIrrigation == True:
-                        print('sent irrigation')
-                        self.FB.ResultIrrDoc_ref.update({
-                            u'IrrigationState':'SENDORDER'
-                        })
-                        self.xbeeComm.sendIrrigationOrder('SITASK', self.agent,self.ActualPrescription)
-                        self.FlagPrescriptionDone = False
-                        self.Mqtt.FlagIrrigation = False
-                        
-                    elif self.Mqtt.FlagNewIrrigation == True :
-                        self.FB.ResultIrrDoc_ref.update({
-                            u'IrrigationState':'SENDORDER'
-                        })
-                        self.xbeeComm.sendIrrigationOrder('SITASK', self.agent,self.Mqtt.NewPrescription)
-                        self.FlagPrescriptionDone = False
-                        self.Mqtt.FlagIrrigation = False
-                        self.Mqtt.FlagNewIrrigation = False
+               
+                if self.Mqtt.FlagIrrigation == True:
+                    self.TotalPrescription = self.ActualPrescription
+                    self.Mqtt.FlagIrrigation=False
+                elif self.Mqtt.FlagNewIrrigation == True:  
+                    self.TotalPrescription = self.Mqtt.NewPrescription
+                    self.Mqtt.FlagNewIrrigation=False
+                else:
+                    pass
+
+                self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'                    
+                if self.horNouwStr == self.cropModel.firstIrrigationtime or self.horNouwStr == self.cropModel.secondIrrigationtime :
+                    if self.FlagTotalPrescApplied== False:
+                        self.cropModel.firstIrrigationtime = '--:--' #para evitar bucle infinito
+                        self.cropModel.secondIrrigationtime = '--:--' #para evitar bucle infinito
+                        self.SendPrescription = self.TotalPrescription/2
+                        self.TimePrescription = self.calculationIrrigationTime(self.IrrigProperties._drippers,self.IrrigProperties._area,
+                            self.IrrigProperties._efficiency,self.IrrigProperties._nominalDischarge,self.SendPrescription)
+                        self.xbeeComm.sendIrrigationOrder('SSTOPP', self.agent,1)
+                        self.xbeeComm.sendIrrigationOrder('SITASK;1', self.agent,self.TimePrescription)
+                        self.IrrigAplied = self.IrrigAplied + self.SendPrescription
+                        print(f'riego aplicado: {self.IrrigAplied}')
+                        if self.IrrigAplied >= self.TotalPrescription:
+                            self.FlagTotalPrescApplied= True
+                            self.FlagPrescriptionDone = False
+                            self.IrrigAplied = 0 
+                        try:    
+                            self.FB.ResultIrrDoc_ref.update({
+                                u'IrrigationState':'SENDORDER'
+                            })
+                        except:
+                            print('Error upload IrrigationState Send Order') 
+
+
             
             #timedelay.sleep(5)
 
@@ -134,17 +172,37 @@ class Main():
         return Report_Agent
 
     def getPrescriptionData(self,prescriptionMode):
-        
         if prescriptionMode=='Moisture_Sensors':
-            #self.prescription = 1.2
             self.prescription=self.presc_Meth.Moisture_Sensor_Presc()
         elif prescriptionMode=='Weather_Station':            
             self.prescription=self.presc_Meth.Weather_Station_presc(self.cropModel.dayscrop)
-            #self.prescription = 1.2
         else:
             self.prescription = 1
-
         return self.prescription    
+
+    def calculationIrrigationTime(self,drippers,area,efficiency,nominalDischarge,prescription):
+        self.timeMinutes = ((prescription*area)/(efficiency*drippers*nominalDischarge))*60
+        self.timeSeconds = self.timeMinutes*60
+        print(f'Timeirrig: {self.timeSeconds} s, {self.timeMinutes} minutes')
+        return int(self.timeSeconds)
+
+
+    
+    def RebootAgent(self):
+        if self.xbeeComm.numberCompletedOrders > 0 :
+            self.realIrrigAplication = (self.xbeeComm.realIrrigAplied*self.IrrigProperties._drippers*self.IrrigProperties._nominalDischarge*self.IrrigProperties._efficiency)/(60*self.IrrigProperties._area)
+            if self.xbeeComm.numberReceivedOrders > self.xbeeComm.numberCompletedOrders :
+                print('probable desperdicio de agua')
+            self.SaveFile = open(self.fileRealIrrigAplication, 'a',errors='ignore')
+            self.SaveFile.write(f'{str(datetime.now()).split()[0]},{str(datetime.now()).split()[1]},{self.TotalPrescription},{self.realIrrigAplication},{self.prescriptionResult.allDataPrescription._deficit}\n')
+            self.SaveFile.close()
+
+        self.FlagPrescriptionDone == True    
+        self.FlagTotalPrescApplied= True
+        self.Mqtt.FlagIrrigation=False
+        self.Mqtt.FlagNewIrrigation=False
+
+
 
 
 if __name__ == "__main__":

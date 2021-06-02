@@ -20,7 +20,9 @@ class Sensors:
         self._TempR=0
         self._TempCanopy=0
         self._HumR=0
-        self.__allSensors=[self._SensorVwc_1,self._SensorVwc_2,self._SensorVwc_3,self._SensorVwc_4,self._TempR, self._TempCanopy,self._HumR]
+        self._SoliTemp=0
+        self._TemAmbDosel = 0 
+        self.__allSensors=[self._SensorVwc_1,self._SensorVwc_2,self._SensorVwc_3,self._SensorVwc_4,self._TempR,self._HumR,self._SoliTemp,self._TempCanopy,self._TemAmbDosel]
         self.__timeReport=datetime.now()
 
 

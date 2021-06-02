@@ -2,12 +2,16 @@ from datetime import datetime
 import math 
 
 class prescriptionMethods():
-    def __init__(self,crop,sensors,prescriptionResult):
+    def __init__(self,crop,sensors,prescriptionResult,apiServiceEstacionMet):
+        self.apiServiceEstacionMet = apiServiceEstacionMet
         self.pathStorage = '/home/pi/Desktop/RealAgent/src/storage/Prescription_History.txt'
+        self.pahtRealIrrigation = '/home/pi/Desktop/RealAgent/src/storage/RealIrrigationApplication.txt'
         self.directoryWeatherStation = '/home/pi/Desktop/RealAgent/src/storage/WheatherStationData.txt'
         self.crop = crop
         self.sensors = sensors
         self.prescriptionResult = prescriptionResult
+
+
     #fucnion para determinar el coeficionete de cultivo dependiendo del dia 
     def f_cropcoeff(self,day,model,cropCoefficients):
         if model=='Onion':
@@ -99,55 +103,66 @@ class prescriptionMethods():
         self.file_met= open(self.directoryWeatherStation, 'r',errors='ignore')
         self.file_met.close
         self.data = self.file_met.read().splitlines()
-        self.EToD, self.RainD  = float(self.data[-1].split(";")[2]),float(self.data[-1].split(";")[3])
+        self.ReferenceET, self.RainD  = float(self.data[-1].split(";")[2]),float(self.data[-1].split(";")[3])
         self.TeMax ,self.TeMin = float(self.data[-1].split(";")[4]),float(self.data[-1].split(";")[2])
-        self.ETc=self.EToD*self.Kc #self.ETc
+        
+        #toma el dato actual de lluvia acumulada desde las 12:00 am
+        self.response = self.apiServiceEstacionMet.request_station()
+        self.infoStation = self.apiServiceEstacionMet.modelWeather.from_dict(self.response)
+        self.ActualRain = self.infoStation.RainD 
+        self.TotalRain = self.RainD + self.ActualRain
+
+        self.ET_Crop=self.ReferenceET*self.Kc #self.ET_Crop ETo dia anterior multiplicado por coeficiente de cultivo
+        
         if daysCrop != 0:
-            self.file_HiD= open(self.pathStorage, 'r',errors='ignore')
+            self.file_HiD= open(self.pahtRealIrrigation, 'r',errors='ignore')
             self.data = self.file_HiD.read().splitlines()
             self.file_HiD.close
-            self.Irrigation=float(self.data[-1].split(';')[3]) #toma el riego de el dia anterior
-            self.depletion=float(self.data[-1].split(';')[4])  #toma la self.depletionecion de el dia anterior  cuento ha disminuido 
+            self.DataIrrDep_Lastday = self.data[-1].split(',')
+            self.Irrigation=float(self.DataIrrDep_Lastday [3]) #toma el riego de el dia anterior
+            self.depletion=float(self.DataIrrDep_Lastday [4])  #toma el ddeficit de el dia anterior  cuento ha disminuido 
             
         else:
             self.Irrigation=0		
             self.depletion=0
 
-        if self.RainD!=0:
-            self.ET_Rain=self.ET/self.RainD #lluvia efectiva
-            self.k=1.011*math.exp(-0.001143*self.ET_Rain)-1.011*math.exp(-0.5208*self.ET_Rain)
+        if self.TotalRain !=0 :
+            self.Coef_ETRain=self.ReferenceET/self.TotalRain #coeficiente de ET respecto a Lluvia total
+            self.k=1.011*math.exp(-0.001143*self.Coef_ETRain)-1.011*math.exp(-0.5208*self.Coef_ETRain)
         else:
             self.k=0.0  
 
-        self.effectiveRain=self.RainD*self.k
+        self.effectiveRain=self.RainD*self.k #lluvia efectiva
                                                  
-        self.dTaw=((self.fieldCapacity -self.pwp)/100)*self.sp_rootdepth*1000  #conversion a metros
-        self.mad=self.dTaw*self.sp_mae  #coeficiente 
+        self.dTaw=((self.fieldCapacity - self.pwp)/100)*self.sp_rootdepth*1000  # espacio ocupado por la raiz
+        self.mad=self.dTaw*self.sp_mae  # espacio de donde no debe bajar la humedad
+        
         if self.dTaw*(1-self.sp_mae) != 0:
-            self.Ks= (self.dTaw-self.depletion)/(self.dTaw*(1-self.sp_mae))
+            self.Ks= (self.dTaw-self.depletion)/(self.dTaw*(1-self.sp_mae)) 
         else:
             self.Ks = 0
 
-        self.ETcadj=self.Ks*self.ETc  #self.ETc ajustado	
-        if  self.Irrigation + self.effectiveRain > self.depletion+self.ETc:            
+        self.ET_Cropadj=self.Ks*self.ET_Crop  #self.ET_Crop ajustado	
+
+        if  self.Irrigation + self.effectiveRain > self.depletion+self.ET_Crop:            
             self.deficit = 0.0
         else:
-            self.deficit = (self.depletion - self.Irrigation - self.effectiveRain + self.ETc)
-        if self.deficit<0:
-            self.deficit=0.0
-        else:
-            pass    
-        if self.deficit>= self.mad:
-            self.Irrigation_pres_net = self.depletion - self.Irrigation - self.effectiveRain + self.ETc # (mm)             
+            self.deficit = (self.depletion - self.Irrigation - self.effectiveRain + self.ET_Crop)
+            if self.deficit<0:
+                self.deficit=0.0    
+
+        if self.deficit >= self.mad:
+            self.Irrigation_pres_net = self.deficit  # (mm)             
         else:
             self.Irrigation_pres_net=0.0
 
         if self.crop.dayscrop >=130 and self.crop.typeCrop=='Onion':
-            self.Irrigation_pres_net  
+            self.Irrigation_pres_net = 0
         
         self.depletion=self.deficit
+
         self._today, self._hour = str(datetime.now()).split()[0],str(datetime.now()).split()[1]
-        self.prescriptionResult.allDataPrescription = ['ET0-Moisture_Sensors',self._today,self._hour,self.Irrigation_pres_net,self.deficit,
-        self.Kc,self.sp_rootdepth,self.dTaw,self.mad,self.Ks,self.ETcadj,self.effectiveRain,self.ETc]
+        self.prescriptionResult.allDataPrescription = ['ET0-Moisture_Sensors',self._today,self._hour,self.Irrigation_pres_net,self.depletion,
+        self.Kc,self.sp_rootdepth,self.dTaw,self.mad,self.Ks,self.ET_Cropadj,self.effectiveRain,self.ET_Crop]
         self.saveDataPrescription(self.pathStorage,self.prescriptionResult.allDataPrescription) 
         return self.Irrigation_pres_net

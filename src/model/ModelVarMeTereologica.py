@@ -15,10 +15,10 @@ class meteorologicalData:
     @staticmethod
     def from_dict(obj: Any) -> 'meteorologicalData':
         date=str( obj["observation_time"]).split(',')[0].split("on")[1]
-        hour=str( obj["observation_time"]).split(',')[1]
+        hour=str( obj["observation_time_rfc822"]).split(' ')[4]
         observation_davis= obj["davis_current_observation"]
-        EToD=float(observation_davis["et_day"])
-        RainD=float(observation_davis["rain_day_in"])
+        EToD=float(observation_davis["et_day"])*25.4
+        RainD=float(observation_davis["rain_day_in"])*25.4
         TeMax=round((float(observation_davis["temp_day_high_f"])-32) * (5/9),2)
         TeMin=round((float(observation_davis["temp_day_low_f"])-32) * (5/9),2) 
         return meteorologicalData( date,hour ,EToD,RainD,TeMax,TeMin)

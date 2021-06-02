@@ -9,10 +9,11 @@ from datetime import datetime, date, time, timedelta
 '''https://googleapis.dev/python/firestore/latest/document.html'''
 
 class FIREBASE_CLASS():
-    def __init__(self,AgentName,cropModel):
+    def __init__(self,AgentName,cropModel,IrrigProperties):
+        self.IrrigProperties = IrrigProperties
         self.cropModel = cropModel
         self.PathCredentials = '/home/pi/Desktop/RealAgent/src/data/ClaveFirebase.json'
-        self.urlDatabase = 'https://manageragents-2a3f6-default-rtdb.firebaseio.com/'
+        self.urlDatabase = 'https://manageragents-119d1-default-rtdb.firebaseio.com/'
         self.AgentName = AgentName
         cred=credentials.Certificate(self.PathCredentials)
         firebase_admin.initialize_app(cred,{
@@ -21,8 +22,9 @@ class FIREBASE_CLASS():
         firestoreDb = firestore.client()
         self.CropDoc_ref = firestoreDb.collection(u''+f'{self.AgentName}').document(u'Crop')
         self.IrrPresDoc_ref = firestoreDb.collection(u''+f'{self.AgentName}').document(u'Irrigation-Prescription')
-        self.ResultIrrDoc_ref= firestoreDb.collection(u''+f'{self.AgentName}').document(u'ResultIrrigation-Prescription')
-        self.SensorsDoc_ref= firestoreDb.collection(u''+f'{self.AgentName}').document(u'Sensors')
+        self.ResultIrrDoc_ref = firestoreDb.collection(u''+f'{self.AgentName}').document(u'ResultIrrigation-Prescription')
+        self.SensorsDoc_ref = firestoreDb.collection(u''+f'{self.AgentName}').document(u'Sensors')
+        self.IrrigPropertiesDoc_ref = firestoreDb.collection(u''+f'{self.AgentName}').document(u'Irrigation-Properties')
 
         doc = self.CropDoc_ref.get()
         if doc.exists:
@@ -40,9 +42,9 @@ class FIREBASE_CLASS():
             print(u' Crop No such document!')
             self.CropDoc_ref.set({
                 u'TypeCrop' : 'Potato',
-                u'pwp' : 0,
-                u'field_capacity':0,
-                u'SeedDate': '1/1/2021',
+                u'pwp' : 20,
+                u'field_capacity':80,
+                u'SeedDate': '6/3/2021',
                 u'daysCrop':0
             })
         doc = self.IrrPresDoc_ref.get()
@@ -51,14 +53,17 @@ class FIREBASE_CLASS():
             #riego-prescripcion/ irrigation-prescription
             self.cropModel.prescMode = self.Irrig_Presc['PrescriptionMethod']
             self.cropModel.presctime = self.Irrig_Presc['PrescriptionTime']
-            self.cropModel.irrigationtime = self.Irrig_Presc['IrrigationTime']
+            self.cropModel.firstIrrigationtime = self.Irrig_Presc['IrrigationTime_1']
+            self.cropModel.secondIrrigationtime = self.Irrig_Presc['IrrigationTime_2']
+
         else:
             print(u' irrigation-prescription No such document!')
             self.IrrPresDoc_ref.set({
                 u'IrrigationMethod': 'drip',
                 u'constanFlow': 1,
                 u'PrescriptionTime': '00:00',
-                u'IrrigationTime': '00:00',
+                u'IrrigationTime_1': '9:00',
+                u'IrrigationTime_2': '15:00',
                 u'PrescriptionMethod' : 'Weather_Station',
                 u'manualValves' : "OFF"
             })
@@ -72,28 +77,36 @@ class FIREBASE_CLASS():
                 u'LastIrrigationDate': '0/0/0/',
                 u'irrigationApplied' : 0,
                 u'IrrigationState' : 'off',
-                u'DaysCrop':0
+                u'IrrigationTime' : 0
             })
         doc = self.SensorsDoc_ref.get()
         if doc.exists:
             pass
         else:
             self.SensorsDoc_ref.set({
-                u''+f'{self.cropModel.seedTime}':{
-                    u'00:00:00':{
-                        u'VWC1' :0,
-                        u'VWC2' :0,
-                        u'VWC3' :0,
-                        u'VWC4' :0,
-                        u'temperature' :0,
-                        u'CanopyTemperature':0,
-                        u'RH' : 0,
-                        u'soilTemperature':0
-                    }
-                    
+                u''+f'{str(self.today)}-{datetime.now().hour}:{datetime.now().minute}':{
+                    u'VWC1' :self.sensors.allSensors[0],
+                    u'VWC2' :self.sensors.allSensors[1],
+                    u'VWC3' :self.sensors.allSensors[2],
+                    u'VWC4' :self.sensors.allSensors[3],
+                    u'temperature' :self.sensors.allSensors[4],
+                    u'RH' : self.sensors.allSensors[5],
+                    u'soilTemperature':self.sensors.allSensors[6],
+                    u'CanopyTemperature':self.sensors.allSensors[7],
+                    u'CanopyTemperatureAmb':self.sensors.allSensors[8],
                 },
             })    
-
+        doc = self.IrrigPropertiesDoc_ref.get()
+        if doc.exists:
+            self.IrrigP = doc.to_dict() 
+            self.IrrigProperties.allDataIrrigProperties = [self.IrrigP['drippers'],self.IrrigP['area'],self.IrrigP['efficiency'],self.IrrigP['nominalDischarge']]
+        else:
+            self.IrrigPropertiesDoc_ref.set({
+                u'drippers' :self.IrrigProperties._drippers,
+                u'area':self.IrrigProperties._area,
+                u'efficiency' :self.IrrigProperties._efficiency,
+                u'nominalDischarge' :self.IrrigProperties._nominalDischarge,       
+            })    
     
 
         #changes to movil APP
@@ -126,5 +139,7 @@ class FIREBASE_CLASS():
                     self.cropModel.prescMode  = second[self.key]
                 elif (self.key == 'PrescriptionTime') :
                     self.cropModel.presctime = second[self.key] 
-                elif (self.key == 'IrrigationTime') :
-                    self.cropModel.irrigationtime  = second[self.key]     
+                elif (self.key == 'IrrigationTime_1') :
+                    self.cropModel.firstIrrigationtime  = second[self.key]  
+                elif (self.key == 'IrrigationTime_2') :
+                    self.cropModel.secondIrrigationtime = second[self.key]            
