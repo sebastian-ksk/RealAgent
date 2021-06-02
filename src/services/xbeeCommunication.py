@@ -81,8 +81,7 @@ class XbeeCommunication():
             if self.ContsensorReport == 12:
                 self.ContsensorReport=0   
                 try:
-                    self.FireBase.SensorsDoc_ref.update
-                    ({
+                    self.FireBase.SensorsDoc_ref.update({
                             u''+f'{str(self.today)}-{datetime.now().hour}:{datetime.now().minute}':{
                                 u'VWC1' :self.sensors.allSensors[0],
                                 u'VWC2' :self.sensors.allSensors[1],

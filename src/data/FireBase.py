@@ -45,7 +45,7 @@ class FIREBASE_CLASS():
                 u'pwp' : 20,
                 u'field_capacity':80,
                 u'SeedDate': '6/3/2021',
-                u'daysCrop':0
+                u'DaysCrop':0
             })
         doc = self.IrrPresDoc_ref.get()
         if doc.exists:
@@ -83,17 +83,18 @@ class FIREBASE_CLASS():
         if doc.exists:
             pass
         else:
+            self.today = date(datetime.now().year,datetime.now().month,datetime.now().day)
             self.SensorsDoc_ref.set({
                 u''+f'{str(self.today)}-{datetime.now().hour}:{datetime.now().minute}':{
-                    u'VWC1' :self.sensors.allSensors[0],
-                    u'VWC2' :self.sensors.allSensors[1],
-                    u'VWC3' :self.sensors.allSensors[2],
-                    u'VWC4' :self.sensors.allSensors[3],
-                    u'temperature' :self.sensors.allSensors[4],
-                    u'RH' : self.sensors.allSensors[5],
-                    u'soilTemperature':self.sensors.allSensors[6],
-                    u'CanopyTemperature':self.sensors.allSensors[7],
-                    u'CanopyTemperatureAmb':self.sensors.allSensors[8],
+                    u'VWC1' :0,
+                    u'VWC2' :0,
+                    u'VWC3' :0,
+                    u'VWC4' :0,
+                    u'temperature' :0,
+                    u'RH' : 0,
+                    u'soilTemperature':0,
+                    u'CanopyTemperature':0,
+                    u'CanopyTemperatureAmb':0,
                 },
             })    
         doc = self.IrrigPropertiesDoc_ref.get()

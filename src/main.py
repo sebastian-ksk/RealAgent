@@ -36,7 +36,8 @@ class Main():
         '''inicializacion de datos'''
         print('init data')
         self.groundDivision="SanRafael"
-        self.agent=4
+        
+        self.agent = int(input('ingrese el numero del agente : '))
         self.FlagPrescriptionDone = False
         self.fileRealIrrigAplication = '/home/pi/Desktop/RealAgent/src/storage/RealIrrigationApplication.txt'
        
@@ -48,7 +49,7 @@ class Main():
         self.schedWeatherSatation.start()
 
         self.schedRebootAgent = BackgroundScheduler()
-        self.schedRebootAgent.add_job(self.RebootAgent, 'cron',  hour = 15, minute = 45)
+        self.schedRebootAgent.add_job(self.RebootAgent, 'cron',  hour = 23, minute = 55)
         self.schedRebootAgent.start()
 
         
@@ -98,32 +99,34 @@ class Main():
                 self.todayMemory = self.today
             else:
                 pass    
-
-            if self.FlagPrescriptionDone == False:
-                self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'
-                if  self.horNouwStr==self.cropModel.presctime: 
-                    if self.Mqtt.FlagPetition == False:
-                        self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
-                        self.FB.ResultIrrDoc_ref.update({
-                             u'NetPrescription':self.ActualPrescription,
-                             u'LastPrescriptionDate' :str(self.today)      
-                        })
-                        print(f'Prescription= {self.ActualPrescription}')
-                        self.FlagPrescriptionDone=True       
-                elif  self.Mqtt.FlagPetition==True:
-                    if self.FlagPrescriptionDone == False:
-                        self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
-                        print(f'Prescription= {self.ActualPrescription}')
-                        self.FB.ResultIrrDoc_ref.update({
-                             u'NetPrescription':self.ActualPrescription,
-                             u'LastPrescriptionDate' :str(self.today)      
-                        })
-                        self.FlagPrescriptionDone=True
-                    self.Report_Agent = self.AgentReport()
-                    self.Mqtt.client.publish(f"Ag/SanRafael/Bloque_1/{self.agent}",f"{self.Report_Agent}",qos=2)     
+            
+            self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'
+            if  self.horNouwStr==self.cropModel.presctime: 
+                if self.Mqtt.FlagPetition == False:
+                    self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
+                    self.FB.ResultIrrDoc_ref.update({
+                            u'NetPrescription':self.ActualPrescription,
+                            u'LastPrescriptionDate' :str(self.today)      
+                    })
+                    print(f'Prescription= {self.ActualPrescription}')
+                    self.FlagPrescriptionDone=True       
+            elif  self.Mqtt.FlagPetition==True:
+                if self.FlagPrescriptionDone == False:
+                    self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
+                    print(f'Prescription= {self.ActualPrescription}')
+                    self.FB.ResultIrrDoc_ref.update({
+                            u'NetPrescription':self.ActualPrescription,
+                            u'LastPrescriptionDate' :str(self.today)      
+                    })
+                    self.FlagPrescriptionDone=True
+                self.Report_Agent = self.AgentReport()
+                self.Mqtt.client.publish(f"Ag/SanRafael/Bloque_1/{self.agent}",f"{self.Report_Agent}",qos=2)     
            
-            elif self.FlagPrescriptionDone == True:
+
+            if self.FlagPrescriptionDone == True:
                
+
+
                 if self.Mqtt.FlagIrrigation == True:
                     self.TotalPrescription = self.ActualPrescription
                     self.Mqtt.FlagIrrigation=False

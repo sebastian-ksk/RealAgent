@@ -119,9 +119,11 @@ class prescriptionMethods():
             self.data = self.file_HiD.read().splitlines()
             self.file_HiD.close
             self.DataIrrDep_Lastday = self.data[-1].split(',')
-            self.Irrigation=float(self.DataIrrDep_Lastday [3]) #toma el riego de el dia anterior
-            self.depletion=float(self.DataIrrDep_Lastday [4])  #toma el ddeficit de el dia anterior  cuento ha disminuido 
-            
+            print(f'valores del dia anterior: {self.DataIrrDep_Lastday}')
+            self.Irrigation = float(self.DataIrrDep_Lastday[3]) #toma el riego de el dia anterior
+            self.depletion = float(self.DataIrrDep_Lastday[4])  #toma el ddeficit de el dia anterior  cuento ha disminuido 
+            print(f'Irrigation last day: {self.Irrigation}')
+            print(f'Irrigation last day: {self.depletion}')
         else:
             self.Irrigation=0		
             self.depletion=0
@@ -132,10 +134,13 @@ class prescriptionMethods():
         else:
             self.k=0.0  
 
+        print(f'Et_R : {self.Coef_ETRain} K: {self.k}')    
+
         self.effectiveRain=self.RainD*self.k #lluvia efectiva
                                                  
-        self.dTaw=((self.fieldCapacity - self.pwp)/100)*self.sp_rootdepth*1000  # espacio ocupado por la raiz
-        self.mad=self.dTaw*self.sp_mae  # espacio de donde no debe bajar la humedad
+        self.dTaw = ((self.fieldCapacity - self.pwp)/100)*self.sp_rootdepth*1000  # espacio ocupado por la raiz
+        self.mad = self.dTaw*self.sp_mae  # espacio de donde no debe bajar la humedad
+        print(f'dTaw : {self.dTaw} Mad: {self.mad}')  
         
         if self.dTaw*(1-self.sp_mae) != 0:
             self.Ks= (self.dTaw-self.depletion)/(self.dTaw*(1-self.sp_mae)) 
@@ -160,7 +165,7 @@ class prescriptionMethods():
             self.Irrigation_pres_net = 0
         
         self.depletion=self.deficit
-
+        print(f'defisit = {self.deficit},IrrNet : {self.Irrigation_pres_net}')
         self._today, self._hour = str(datetime.now()).split()[0],str(datetime.now()).split()[1]
         self.prescriptionResult.allDataPrescription = ['ET0-Moisture_Sensors',self._today,self._hour,self.Irrigation_pres_net,self.depletion,
         self.Kc,self.sp_rootdepth,self.dTaw,self.mad,self.Ks,self.ET_Cropadj,self.effectiveRain,self.ET_Crop]
