@@ -102,14 +102,15 @@ class Main():
             
             self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'
             if  self.horNouwStr==self.cropModel.presctime: 
-                if self.Mqtt.FlagPetition == False:
+                if self.FlagPrescriptionDone == False:
                     self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
                     self.FB.ResultIrrDoc_ref.update({
                             u'NetPrescription':self.ActualPrescription,
                             u'LastPrescriptionDate' :str(self.today)      
                     })
                     print(f'Prescription= {self.ActualPrescription}')
-                    self.FlagPrescriptionDone=True       
+                    self.FlagPrescriptionDone=True    
+
             elif  self.Mqtt.FlagPetition==True:
                 if self.FlagPrescriptionDone == False:
                     self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
@@ -118,15 +119,12 @@ class Main():
                             u'NetPrescription':self.ActualPrescription,
                             u'LastPrescriptionDate' :str(self.today)      
                     })
-                    self.FlagPrescriptionDone=True
+                    self.FlagPrescriptionDone=True   
                 self.Report_Agent = self.AgentReport()
                 self.Mqtt.client.publish(f"Ag/SanRafael/Bloque_1/{self.agent}",f"{self.Report_Agent}",qos=2)     
-           
+                self.Mqtt.FlagPetition = False
 
             if self.FlagPrescriptionDone == True:
-               
-
-
                 if self.Mqtt.FlagIrrigation == True:
                     self.TotalPrescription = self.ActualPrescription
                     self.Mqtt.FlagIrrigation=False
@@ -171,7 +169,8 @@ class Main():
         Taw,Mae,PRESC_MODE_send=self.prescData[8],self.prescData[9],self.prescData[0].split('-')[0]
         VWC,deple=self.sensors.allSensors[0],self.prescData[4]
         date_report,hour_report=date_report=str(datetime.now()).split()[0],str(datetime.now()).split()[1]
-        Report_Agent=f"{LOTE};{CROP_DEFAULT}.CRO;{str(STAR_DATE)};{presc};{Kc};{Ks};{CONT_DAYS};{CONT_WEEK};{root_depth};{Taw};{Mae};{PRESC_MODE_send};{VWC};{deple};{date_report};{hour_report}"
+        Report_Agent=f"{LOTE}{self.agent};{CROP_DEFAULT}.CRO;{str(STAR_DATE)};{presc};{Kc};{Ks};{CONT_DAYS};{CONT_WEEK};{root_depth};{Taw};{Mae};{PRESC_MODE_send};{VWC};{deple};{date_report};{hour_report}"
+        print(Report_Agent)
         return Report_Agent
 
     def getPrescriptionData(self,prescriptionMode):
