@@ -7,7 +7,8 @@ class MqttComunication():
     FlagIrrigation = False
     FlagNewIrrigation = False
     NewPrescription = 0
-    def __init__(self,NUM_LOTE):
+    def __init__(self,NUM_LOTE,PmS):
+        self.estation = PmS
         self.num_GroundDivision = NUM_LOTE
         self.nameClient=f'Real_Agent{NUM_LOTE}'
         self.client =paho.mqtt.client.Client(client_id=self.nameClient)
@@ -17,17 +18,21 @@ class MqttComunication():
         self.client.username_pw_set( "agent" ,  password = "789.123" ) 
         self.client.loop_start()
 
+
     #------------------------FUNCIONES MQTT-----------------------------------
     def on_connect(self,client, userdata, flags, rc):
         print('connected (%s)' % client._client_id)
-        self.client.subscribe(topic='PmS/SanRafael/Ag', qos=0)
         self.client.unsubscribe("Ag/#")
+        print(f'Etiqueta = PmS/{self.estation}/Ag')
+        self.client.subscribe(topic='PmS/Tibasosa/Ag', qos=0)
+        
 
     def on_message(self,client, userdata, message):
         #global FlagAuth 
         #global Date_R,Fl_Irr,Fl_IrrN,NewPrescription,Fl_petp
         self.data=str(message.payload).split("'")[1].split(":")  #split mensaje con ":"
         self.topic=str(message.topic).split("/")[0]
+        print('llego')
         if self.topic=="PmS":
             print(f'bandera mqtt {self.FlagAuth}' )
             self.FlagAuth = True

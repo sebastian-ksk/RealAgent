@@ -9,14 +9,10 @@ from model.ModelPrescriptionResult import PrescriptionResults
 from services.mqttComunication import MqttComunication
 from services.xbeeCommunication import XbeeCommunication
 from services.PrescriptionMethods import prescriptionMethods
-
 '''
 librerias externas al sistema 
 '''
-
-
 from apscheduler.schedulers.background import BackgroundScheduler  #para programar tareas
-
 from datetime import datetime, date, time, timedelta #para fechas y hora
 import time as timedelay #para cronometrar tiempo
 from threading import Thread
@@ -35,7 +31,7 @@ class Main():
         super(Main,self).__init__()
         '''inicializacion de datos'''
         print('init data')
-        self.groundDivision="SanRafael"
+        self.groundDivision = "Tibasosa"
         
         self.agent = int(input('ingrese el numero del agente : '))
         self.FlagPrescriptionDone = False
@@ -71,7 +67,7 @@ class Main():
         self.presc_Meth =  prescriptionMethods(self.cropModel,self.sensors,self.prescriptionResult,self.apiServiceMet) #inicializacion de metodos de prescripcion
         self.presc_Meth.Moisture_Sensor_Presc()
         '''========Inicializacion de Protocolos de comunicacion ====='''
-        self.Mqtt = MqttComunication( self.agent)
+        self.Mqtt = MqttComunication(self.agent, self.groundDivision)
         timedelay.sleep(5)
         print('---------XbeeCommunication --------------------')
         self.xbeeComm=XbeeCommunication("/dev/ttyUSB0",9600,self.sensors,self.FB)
@@ -121,7 +117,7 @@ class Main():
                     })
                     self.FlagPrescriptionDone=True   
                 self.Report_Agent = self.AgentReport()
-                self.Mqtt.client.publish(f"Ag/SanRafael/Bloque_1/{self.agent}",f"{self.Report_Agent}",qos=2)     
+                self.Mqtt.client.publish(f"Ag/{self.groundDivision}/Bloque_1/{self.agent}",f"{self.Report_Agent}",qos=2)     
                 self.Mqtt.FlagPetition = False
 
             if self.FlagPrescriptionDone == True:
@@ -157,10 +153,7 @@ class Main():
                         except:
                             print('Error upload IrrigationState Send Order') 
 
-
-            
             #timedelay.sleep(5)
-
     def AgentReport(self):
         self.prescData = self.prescriptionResult.allDataPrescription
         LOTE,CROP_DEFAULT,STAR_DATE = self.groundDivision,self.cropModel.typeCrop,self.cropModel.seedTime
