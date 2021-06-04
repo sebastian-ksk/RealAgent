@@ -78,6 +78,11 @@ class XbeeCommunication():
             self.messageSens = self.message[1].split('\x00')[0].split('End')[0].split(',')
             self.save_data_Xbee(f"{self.Path_Data}/Sensor_data.txt",self.message[1].split('\x00')[0].split('End')[0])
             self.sensors.allSensors = [float(x) for x in self.messageSens[1:len(self.messageSens)-1] ]
+            
+            for x in range(0,4):
+                self.sensors.allSensors[x] = round(self.calc_volumetricWaterContent(self.sensors.allSensors[x],4.75),2)
+            print(f'All Sensors : {self.sensors.allSensors}')
+
             if self.ContsensorReport == 12:
                 self.ContsensorReport=0   
                 try:
@@ -103,6 +108,46 @@ class XbeeCommunication():
                 self.ContsensorReport+=1    
 
 
+    def calc_volumetricWaterContent(self,adcValue,voltageReference):
+           #........... Vegetronix Datasheet ...............
+        self._sensorVoltage = (adcValue*voltageReference)/1024
+        if self._sensorVoltage<=1.1:
+            moistureValue = 10*self._sensorVoltage-1
+            if moistureValue<=0.0:
+                moistureValue=0.0
+        elif self._sensorVoltage>1.1 and self._sensorVoltage<=1.3:
+            moistureValue = 25*self._sensorVoltage-17.5
+        elif self._sensorVoltage>1.3 and self._sensorVoltage<=1.82:
+            moistureValue = 48.08*self._sensorVoltage-47.5
+        elif self._sensorVoltage>1.82 and self._sensorVoltage<=2.2:
+            moistureValue = 26.32*self._sensorVoltage-7.89
+        elif self._sensorVoltage>2.2 and self._sensorVoltage<=3.0:
+            #Original
+            moistureValue = 62.5*self._sensorVoltage-87.5
+        else:
+            moistureValue = 100
+        return moistureValue
+#............. Felipe and Sebastian Equation
+    #    if self._sensorVoltage<=1.34:
+    #       moistureValue = 10.052*self._sensorVoltage-6.5
+    #       if moistureValue<=0.0:
+    #          moistureValue=0.0
+    #    elif self._sensorVoltage>1.34 and self._sensorVoltage<=1.41:
+    #       moistureValue = 91.8864*self._sensorVoltage-118.4967
+    #    elif self._sensorVoltage>1.41 and self._sensorVoltage<=1.6036:
+    #       moistureValue = 14.4655*self._sensorVoltage-10.6601
+    #    elif self._sensorVoltage>1.6036 and self._sensorVoltage<=1.7735:
+    #       moistureValue = 18.8*self._sensorVoltage-15.5687
+    #    elif self._sensorVoltage>1.7735 and self._sensorVoltage<=2.0923:
+    #       moistureValue = 41.1692*self._sensorVoltage-55.879
+    #    elif self._sensorVoltage>2.0923 and self._sensorVoltage<=2.3201:
+    #       moistureValue = 6.5147*self._sensorVoltage+16.3505
+    #    elif self._sensorVoltage>2.3201 and self._sensorVoltage<=3.2:
+    #       moistureValue = 4.5065*self._sensorVoltage+20.6494
+    #    else:
+    #       moistureValue = 43.0
+    #    return moistureValue 
+        
 
     def save_data_Xbee(self,directory,message):
         
@@ -110,9 +155,6 @@ class XbeeCommunication():
         self.SaveFile = open(self.dir_file, 'a',errors='ignore')
         self.SaveFile.write(f'{str(datetime.now()).split()[0]},{str(datetime.now()).split()[1]},{message}\n')
         self.SaveFile.close()
-
-
-
 
     def sendIrrigationOrder(self,message,Agent,presc):
         try:

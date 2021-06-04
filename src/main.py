@@ -164,12 +164,11 @@ class Main():
     def AgentReport(self):
         self.prescData = self.prescriptionResult.allDataPrescription
         LOTE,CROP_DEFAULT,STAR_DATE = self.groundDivision,self.cropModel.typeCrop,self.cropModel.seedTime
-        presc,Kc,Ks=self.prescData[3],self.prescData[5],self.prescData[9]
-        CONT_DAYS,CONT_WEEK,root_depth = self.cropModel.dayscrop,self.contWeeks,self.prescData[7]
-        Taw,Mae,PRESC_MODE_send=self.prescData[8],self.prescData[9],self.prescData[0].split('-')[0]
-        VWC,deple=self.sensors.allSensors[0],self.prescData[4]
-        date_report,hour_report=date_report=str(datetime.now()).split()[0],str(datetime.now()).split()[1]
-        Report_Agent=f"{LOTE}{self.agent};{CROP_DEFAULT}.CRO;{str(STAR_DATE)};{presc};{Kc};{Ks};{CONT_DAYS};{CONT_WEEK};{root_depth};{Taw};{Mae};{PRESC_MODE_send};{VWC};{deple};{date_report};{hour_report}"
+        presc,Kc,Ks=round(self.prescData[3],3),round(self.prescData[5],3),round(self.prescData[9],3)
+        CONT_DAYS,CONT_WEEK,root_depth = self.cropModel.dayscrop,self.contWeeks,round(self.prescData[7]*1000,3)
+        Taw,Mae,PRESC_MODE_send=round(self.prescData[8],3),round(self.prescData[9],3),self.prescData[0].split('-')[0]
+        VWC,deple=round(self.sensors.allSensors[3],3),round(self.prescData[4],3)
+        Report_Agent=f"{LOTE}{self.agent};{CROP_DEFAULT}.CRO;{str(STAR_DATE)};{presc};{Kc};{Ks};{CONT_DAYS};{CONT_WEEK};{root_depth};{Taw};{Mae};{PRESC_MODE_send};{VWC};{deple};1;{datetime.now()}"
         print(Report_Agent)
         return Report_Agent
 
