@@ -12,6 +12,7 @@ from services.PrescriptionMethods import prescriptionMethods
 '''
 librerias externas al sistema 
 '''
+import signal
 from apscheduler.schedulers.background import BackgroundScheduler  #para programar tareas
 from datetime import datetime, date, time, timedelta #para fechas y hora
 import time as timedelay #para cronometrar tiempo
@@ -35,6 +36,10 @@ class Main():
         
         self.agent = int(input('ingrese el numero del agente : '))
         self.FlagPrescriptionDone = False
+        self.FlagOrderIrrigSend = False
+        self.TimePrescription = 0
+        self.HourSendIrrigOrder = datetime.now()
+
         self.fileRealIrrigAplication = '/home/pi/Desktop/RealAgent/src/storage/RealIrrigationApplication.txt'
        
         #estacion meteorlogica
@@ -69,22 +74,33 @@ class Main():
         '''========Inicializacion de Protocolos de comunicacion ====='''
         self.Mqtt = MqttComunication(self.agent, self.groundDivision)
         timedelay.sleep(5)
+
         print('---------XbeeCommunication --------------------')
-        self.xbeeComm=XbeeCommunication("/dev/ttyUSB0",9600,self.sensors,self.FB)
-    
-        self.subproces_Sens=Thread(target=self.xbeeComm.runCallback)
-        self.subproces_Sens.daemon=True
-        self.subproces_Sens.start()
+        self.xbeeComm = XbeeCommunication("/dev/ttyUSB0",9600,self.sensors,self.FB)
+        self.subproces_XbeeCallBack=Thread(target=self.xbeeComm.runCallback)
+        self.subproces_XbeeCallBack.daemon=True
+        self.subproces_XbeeCallBack.start()
+
         #print(sensor.allSensors)
 
    
-    def realAgentRun(self):
+    def realAgentPrescription(self):
+        print('init program')
         self.todayMemory =  date(2021,3,6)
         #self.todayMemory = date(datetime.now().year,datetime.now().month,datetime.now().day)
         self.IrrigAplied = 0
         self.TotalPrescription = 0
         self.FlagTotalPrescApplied= False
         while True:  
+            if self.FlagOrderIrrigSend == True:
+                self.CurrentTime = datetime.now()
+                self.duration_in_s = (self.CurrentTime-self.HourSendIrrigOrder).total_seconds()
+                if self.duration_in_s >= self.self.TimePrescription:
+                    self.xbeeComm.sendIrrigationOrder('SSTOPP;1;', self.agent)
+                    self.FlagOrderIrrigSend = False
+            else:
+                pass 
+
             self.today = date(datetime.now().year,datetime.now().month,datetime.now().day)
             if self.today != self.todayMemory:
                 self.cropModel.dayscrop = abs(self.today-self.cropModel.seedTime).days
@@ -139,8 +155,11 @@ class Main():
                         self.SendPrescription = self.TotalPrescription/2
                         self.TimePrescription = self.calculationIrrigationTime(self.IrrigProperties._drippers,self.IrrigProperties._area,
                             self.IrrigProperties._efficiency,self.IrrigProperties._nominalDischarge,self.SendPrescription)
-                        self.xbeeComm.sendIrrigationOrder('SSTOPP', self.agent,1)
-                        self.xbeeComm.sendIrrigationOrder('SITASK;1', self.agent,self.TimePrescription)
+                        self.xbeeComm.sendIrrigationOrder('SSTOPP;1;', self.agent)
+                        timedelay.sleep(2)
+                        self.xbeeComm.sendIrrigationOrder(f'SITASK;1;{self.TimePrescription};', self.agent)
+                        self.HourSendIrrigOrder = datetime.now()
+                        self.FlagOrderIrrigSend = True
                         self.IrrigAplied = self.IrrigAplied + self.SendPrescription
                         print(f'riego aplicado: {self.IrrigAplied}')
                         if self.IrrigAplied >= self.TotalPrescription:
@@ -153,8 +172,8 @@ class Main():
                             })
                         except:
                             print('Error upload IrrigationState Send Order') 
-
-            #timedelay.sleep(5)
+    
+    
     def AgentReport(self):
         self.prescData = self.prescriptionResult.allDataPrescription
         LOTE,CROP_DEFAULT,STAR_DATE = self.groundDivision,self.cropModel.typeCrop,self.cropModel.seedTime
@@ -203,9 +222,17 @@ class Main():
 
 
 
+
+
 if __name__ == "__main__":
-    PS= Main()
+    MainSystem = Main()
     timedelay.sleep(5)
-    subproces_PrincF=Thread(target=PS.realAgentRun())
+    subproces_PrincF=Thread(target= MainSystem.realAgentPrescription())
+    subproces_PrincF.daemon = True
     subproces_PrincF.start()
+  
+
+
+
+
 

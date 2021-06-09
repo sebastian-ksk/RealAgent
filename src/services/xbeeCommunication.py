@@ -18,7 +18,7 @@ class XbeeCommunication():
 
         self.realIrrigAplied = 0
         self.XbeesValvesSystem={'Agent_1': '0013A20041573102', 
-        'Agent_2': '0013A20040E8762A',
+        'Agent_2': '0013A20040D8D9C4',
         'Agent_3': '0013A20040E7412C',
         'Agent_4': '0013A20040E8816B'}
         print('xbee  ')
@@ -27,9 +27,6 @@ class XbeeCommunication():
         self.device=XBeeDevice(UsbDirection,baudRate)
         self.device.open()
         print('xbee init ')
-        # self.subproces_Sens=Thread(target=self.xbeeComm.runCallback)
-        # self.subproces_Sens.daemon=True
-        # self.subproces_Sens.start()
 
     def runCallback(self):
         try: 
@@ -166,11 +163,11 @@ class XbeeCommunication():
         self.SaveFile.write(f'{str(datetime.now()).split()[0]},{str(datetime.now()).split()[1]},{message}\n')
         self.SaveFile.close()
 
-    def sendIrrigationOrder(self,message,Agent,presc):
+    def sendIrrigationOrder(self,message,Agent):
         try:
             print(self.XbeesValvesSystem[f'Agent_{Agent}'])
             self.remote_device=RemoteXBeeDevice(self.device,XBee64BitAddress.from_hex_string(self.XbeesValvesSystem[f'Agent_{Agent}']))     
-            self.device.send_data(self.remote_device,f'{message};{presc};')   
+            self.device.send_data(self.remote_device,message)   
             print('send xbee order .') 
             return True
         except:
