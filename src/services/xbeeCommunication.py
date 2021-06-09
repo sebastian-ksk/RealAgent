@@ -84,6 +84,7 @@ class XbeeCommunication():
             print(f'All Sensors : {self.sensors.allSensors}')
 
             if self.sensors.allSensors[4] >= 125:
+                print('wrong sensors temp')
                 self.sensors.allSensors[4] = self.sensors.allSensors [8] 
 
             if self.ContsensorReport == 12:
@@ -130,6 +131,12 @@ class XbeeCommunication():
         else:
             moistureValue = 100
         return moistureValue
+        #  timeacq=time.asctime()
+        #  hour=str(time.strftime("%H:%M:%S")) 
+        #  day=str(time.strftime("%Y-%m-%d"))
+        #  dy=str(day)+" "+str(hour)
+        #  data={"user":"Angel","Treatment":3,"Longitude":float(5.5),"Latitude":float(-78.4),"SM_1":float(data0[2]),"SM_2":float(data0[3]),"SM_3":float(data0[4]),"Env_Temp":float(data0[5]),"RH":float(data0[6]),"CO2":float(data0[7]),"Canopy_Temp":float(data0[8]),"CS_Temp":float(data0[9]),"Irrig_Pres_Rate":0.0,"Irrig_Pres_Time":0.0,"Date_Time":str(dy)}
+        #  requests.post(url="http://104.248.53.140:8080/sPostV3.php",json=data)  
 #............. Felipe and Sebastian Equation
     #    if self._sensorVoltage<=1.34:
     #       moistureValue = 10.052*self._sensorVoltage-6.5

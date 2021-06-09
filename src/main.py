@@ -71,6 +71,7 @@ class Main():
         timedelay.sleep(5)
         print('---------XbeeCommunication --------------------')
         self.xbeeComm=XbeeCommunication("/dev/ttyUSB0",9600,self.sensors,self.FB)
+    
         self.subproces_Sens=Thread(target=self.xbeeComm.runCallback)
         self.subproces_Sens.daemon=True
         self.subproces_Sens.start()
@@ -187,15 +188,18 @@ class Main():
             self.realIrrigAplication = (self.xbeeComm.realIrrigAplied*self.IrrigProperties._drippers*self.IrrigProperties._nominalDischarge*self.IrrigProperties._efficiency)/(60*self.IrrigProperties._area)
             if self.xbeeComm.numberReceivedOrders > self.xbeeComm.numberCompletedOrders :
                 print('probable desperdicio de agua')
-            self.SaveFile = open(self.fileRealIrrigAplication, 'a',errors='ignore')
-            self.SaveFile.write(f'{str(datetime.now()).split()[0]},{str(datetime.now()).split()[1]},{self.TotalPrescription},{self.realIrrigAplication},{self.prescriptionResult.allDataPrescription._deficit}\n')
-            self.SaveFile.close()
+        else:
+            self.realIrrigAplication = 0
+            
+        self.SaveFile = open(self.fileRealIrrigAplication, 'a',errors='ignore')
+        self.SaveFile.write(f'{str(datetime.now()).split()[0]},{str(datetime.now()).split()[1]},{self.TotalPrescription},{self.realIrrigAplication},{self.prescriptionResult.allDataPrescription._deficit}\n')
+        self.SaveFile.close()
 
         self.FlagPrescriptionDone == True    
         self.FlagTotalPrescApplied= True
         self.Mqtt.FlagIrrigation=False
         self.Mqtt.FlagNewIrrigation=False
-
+        print('Agent ReStart...')
 
 
 

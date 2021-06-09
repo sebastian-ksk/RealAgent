@@ -125,14 +125,15 @@ class prescriptionMethods():
             print(f'Irrigation last day: {self.Irrigation}')
             print(f'Irrigation last day: {self.depletion}')
         else:
-            self.Irrigation=0		
+            self.Irrigation=0       
             self.depletion=0
 
         if self.TotalRain !=0 :
             self.Coef_ETRain=self.ReferenceET/self.TotalRain #coeficiente de ET respecto a Lluvia total
             self.k=1.011*math.exp(-0.001143*self.Coef_ETRain)-1.011*math.exp(-0.5208*self.Coef_ETRain)
         else:
-            self.k=0.0  
+            self.k = 0.0
+            self.Coef_ETRain = 0.0
 
         print(f'Et_R : {self.Coef_ETRain} K: {self.k}')    
 
@@ -147,7 +148,7 @@ class prescriptionMethods():
         else:
             self.Ks = 0
 
-        self.ET_Cropadj=self.Ks*self.ET_Crop  #self.ET_Crop ajustado	
+        self.ET_Cropadj=self.Ks*self.ET_Crop  #self.ET_Crop ajustado    
 
         if  self.Irrigation + self.effectiveRain > self.depletion+self.ET_Crop:            
             self.deficit = 0.0
