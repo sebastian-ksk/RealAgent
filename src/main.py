@@ -37,7 +37,9 @@ class Main():
         self.agent = int(input('ingrese el numero del agente : '))
         self.FlagPrescriptionDone = False
         self.FlagOrderIrrigSend = False
+        self.FlagirrigationAuthor = False
         self.TimePrescription = 0
+        self.TotalPrescription = 0
         self.HourSendIrrigOrder = datetime.now()
 
         self.fileRealIrrigAplication = '/home/pi/Desktop/RealAgent/src/storage/RealIrrigationApplication.txt'
@@ -50,7 +52,7 @@ class Main():
         self.schedWeatherSatation.start()
 
         self.schedRebootAgent = BackgroundScheduler()
-        self.schedRebootAgent.add_job(self.RebootAgent, 'cron',  hour = 23, minute = 55)
+        self.schedRebootAgent.add_job(self.RebootAgent, 'cron',  hour = 23, minute = 57)
         self.schedRebootAgent.start()
 
         
@@ -95,8 +97,15 @@ class Main():
             if self.FlagOrderIrrigSend == True:
                 self.CurrentTime = datetime.now()
                 self.duration_in_s = (self.CurrentTime-self.HourSendIrrigOrder).total_seconds()
-                if self.duration_in_s >= self.self.TimePrescription:
+                if self.duration_in_s >= self.TimePrescription:
                     self.xbeeComm.sendIrrigationOrder('SSTOPP;1;', self.agent)
+                    try:
+                        self.FireBase.ResultIrrDoc_ref.update({
+                            u'irrigationApplied' : self.IrrigAplied 
+                        })
+                    except:
+                        print('error update data irrigationApplied')
+                        print("Unexpected error:", sys.exc_info()[0])
                     self.FlagOrderIrrigSend = False
             else:
                 pass 
@@ -132,46 +141,53 @@ class Main():
                             u'NetPrescription':self.ActualPrescription,
                             u'LastPrescriptionDate' :str(self.today)      
                     })
-                    self.FlagPrescriptionDone=True   
+                    self.FlagPrescriptionDone = True   
                 self.Report_Agent = self.AgentReport()
                 self.Mqtt.client.publish(f"Ag/{self.groundDivision}/Bloque_1/{self.agent}",f"{self.Report_Agent}",qos=2)     
                 self.Mqtt.FlagPetition = False
 
             if self.FlagPrescriptionDone == True:
-                if self.Mqtt.FlagIrrigation == True:
-                    self.TotalPrescription = self.ActualPrescription
-                    self.Mqtt.FlagIrrigation=False
-                elif self.Mqtt.FlagNewIrrigation == True:  
-                    self.TotalPrescription = self.Mqtt.NewPrescription
-                    self.Mqtt.FlagNewIrrigation=False
+                
+                if self.cropModel.negotiation == True:   
+                    if self.Mqtt.FlagIrrigation == True:
+                        self.TotalPrescription = self.ActualPrescription
+                        self.Mqtt.FlagIrrigation = False
+                        self.FlagirrigationAuthor = True
+                    elif self.Mqtt.FlagNewIrrigation == True:  
+                        self.TotalPrescription = self.Mqtt.NewPrescription
+                        self.Mqtt.FlagNewIrrigation = False
+                        self.FlagirrigationAuthor = True
                 else:
-                    pass
+                    self.TotalPrescription = self.ActualPrescription
+                    self.FlagirrigationAuthor  = True          
 
-                self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'                    
-                if self.horNouwStr == self.cropModel.firstIrrigationtime or self.horNouwStr == self.cropModel.secondIrrigationtime :
-                    if self.FlagTotalPrescApplied== False:
-                        self.cropModel.firstIrrigationtime = '--:--' #para evitar bucle infinito
-                        self.cropModel.secondIrrigationtime = '--:--' #para evitar bucle infinito
-                        self.SendPrescription = self.TotalPrescription/2
-                        self.TimePrescription = self.calculationIrrigationTime(self.IrrigProperties._drippers,self.IrrigProperties._area,
-                            self.IrrigProperties._efficiency,self.IrrigProperties._nominalDischarge,self.SendPrescription)
-                        self.xbeeComm.sendIrrigationOrder('SSTOPP;1;', self.agent)
-                        timedelay.sleep(2)
-                        self.xbeeComm.sendIrrigationOrder(f'SITASK;1;{self.TimePrescription};', self.agent)
-                        self.HourSendIrrigOrder = datetime.now()
-                        self.FlagOrderIrrigSend = True
-                        self.IrrigAplied = self.IrrigAplied + self.SendPrescription
-                        print(f'riego aplicado: {self.IrrigAplied}')
-                        if self.IrrigAplied >= self.TotalPrescription:
-                            self.FlagTotalPrescApplied= True
-                            self.FlagPrescriptionDone = False
-                            self.IrrigAplied = 0 
-                        try:    
-                            self.FB.ResultIrrDoc_ref.update({
-                                u'IrrigationState':'SENDORDER'
-                            })
-                        except:
-                            print('Error upload IrrigationState Send Order') 
+                if self.FlagirrigationAuthor == True:
+                    self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'                    
+                    if self.horNouwStr == self.cropModel.firstIrrigationtime or self.horNouwStr == self.cropModel.secondIrrigationtime :
+                        if self.FlagTotalPrescApplied== False:
+                            self.cropModel.firstIrrigationtime = '--:--' #para evitar bucle infinito
+                            self.cropModel.secondIrrigationtime = '--:--' #para evitar bucle infinito
+                            self.SendPrescription = self.TotalPrescription/2
+                            self.TimePrescription = self.calculationIrrigationTime(self.IrrigProperties._drippers,self.IrrigProperties._area,
+                                self.IrrigProperties._efficiency,self.IrrigProperties._nominalDischarge,self.SendPrescription)
+                            if self.TimePrescription > 20:
+                                self.xbeeComm.sendIrrigationOrder(f'SITASK;1;{self.TimePrescription};', self.agent)
+                                self.FlagOrderIrrigSend = True
+                                self.HourSendIrrigOrder = datetime.now()
+                            self.IrrigAplied = self.IrrigAplied + self.SendPrescription
+                            
+                            print(f'riego aplicado: {self.IrrigAplied}')
+                            if self.IrrigAplied >= self.TotalPrescription:
+                                self.FlagTotalPrescApplied= True
+                                self.FlagPrescriptionDone = False
+                                self.FlagirrigationAuthor = False
+                                self.IrrigAplied = 0 
+                            try:    
+                                self.FB.ResultIrrDoc_ref.update({
+                                    u'IrrigationState':'SENDORDER'
+                                })
+                            except:
+                                print('Error upload IrrigationState Send Order') 
     
     
     def AgentReport(self):
@@ -204,16 +220,15 @@ class Main():
     
     def RebootAgent(self):
         if self.xbeeComm.numberCompletedOrders > 0 :
-            self.realIrrigAplication = (self.xbeeComm.realIrrigAplied*self.IrrigProperties._drippers*self.IrrigProperties._nominalDischarge*self.IrrigProperties._efficiency)/(60*self.IrrigProperties._area)
+            self.realIrrigAplication = (self.TotalPrescription/2)*self.xbeeComm.numberCompletedOrders
             if self.xbeeComm.numberReceivedOrders > self.xbeeComm.numberCompletedOrders :
                 print('probable desperdicio de agua')
         else:
             self.realIrrigAplication = 0
             
         self.SaveFile = open(self.fileRealIrrigAplication, 'a',errors='ignore')
-        self.SaveFile.write(f'{str(datetime.now()).split()[0]},{str(datetime.now()).split()[1]},{self.TotalPrescription},{self.realIrrigAplication},{self.prescriptionResult.allDataPrescription._deficit}\n')
+        self.SaveFile.write(f'{str(datetime.now()).split()[0]},{str(datetime.now()).split()[1]},{self.TotalPrescription},{self.realIrrigAplication},{self.prescriptionResult._deficit}\n')
         self.SaveFile.close()
-
         self.FlagPrescriptionDone == True    
         self.FlagTotalPrescApplied= True
         self.Mqtt.FlagIrrigation=False

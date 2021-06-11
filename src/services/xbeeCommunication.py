@@ -15,8 +15,6 @@ class XbeeCommunication():
         self.numberReceivedOrders = 0
         self.FlagCompletedOrder = [False,False] 
         self.numberCompletedOrders = 0
-
-        self.realIrrigAplied = 0
         self.XbeesValvesSystem={'Agent_1': '0013A20041573102', 
         'Agent_2': '0013A20040D8D9C4',
         'Agent_3': '0013A20040E7412C',
@@ -46,13 +44,11 @@ class XbeeCommunication():
             if self.message[1].split(";")[0]=="COMPLETE":
                 print('End Irrigation')
                 self.save_data_Xbee(f"{self.Path_Data}/Irrigation_finished.txt",self.message[1])             
-                self.realIrrigAplied = self.realIrrigAplied + float(self.message[1].split(';')[2])/60 #en minutos
-                self.numberCompletedOrders +=1
+                self.numberCompletedOrders += 1
                 try:
                     self.FireBase.ResultIrrDoc_ref.update({
                         u'IrrigationState':'OFF',
                         u'LastIrrigationDate' : str(self.today),
-                        u'irrigationApplied' : float(self.message[1].split(';')[2])/60
                     })
                 except:
                     print('error update data IrrigationState:OFF')
@@ -60,7 +56,7 @@ class XbeeCommunication():
             else:
                 print('Irrigation Start')
                 self.save_data_Xbee(f"{self.Path_Data}/Irrigation_started.txt",self.message[1])
-                self.numberReceivedOrders+=1    
+                self.numberReceivedOrders += 1    
                 try:
                     self.FireBase.ResultIrrDoc_ref.update({
                         u'IrrigationState':'ON'
@@ -75,15 +71,12 @@ class XbeeCommunication():
             self.messageSens = self.message[1].split('\x00')[0].split('End')[0].split(',')
             self.save_data_Xbee(f"{self.Path_Data}/Sensor_data.txt",self.message[1].split('\x00')[0].split('End')[0])
             self.sensors.allSensors = [float(x) for x in self.messageSens[1:len(self.messageSens)-1] ]
-            
             for x in range(0,4):
                 self.sensors.allSensors[x] = round(self.calc_volumetricWaterContent(self.sensors.allSensors[x],4.75),2)
             print(f'All Sensors : {self.sensors.allSensors}')
-
             if self.sensors.allSensors[4] >= 125:
                 print('wrong sensors temp')
                 self.sensors.allSensors[4] = self.sensors.allSensors [8] 
-
             if self.ContsensorReport == 12:
                 self.ContsensorReport=0   
                 try:

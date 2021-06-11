@@ -60,6 +60,7 @@ class FIREBASE_CLASS():
             print(u' irrigation-prescription No such document!')
             self.IrrPresDoc_ref.set({
                 u'IrrigationMethod': 'drip',
+                u'Negotiation' : False,
                 u'constanFlow': 1,
                 u'PrescriptionTime': '00:00',
                 u'IrrigationTime_1': '9:00',
@@ -143,4 +144,6 @@ class FIREBASE_CLASS():
                 elif (self.key == 'IrrigationTime_1') :
                     self.cropModel.firstIrrigationtime  = second[self.key]  
                 elif (self.key == 'IrrigationTime_2') :
-                    self.cropModel.secondIrrigationtime = second[self.key]            
+                    self.cropModel.secondIrrigationtime = second[self.key]       
+                elif self.key == 'Negotiation' :
+                    self.cropModel.negotiation = second[self.key]

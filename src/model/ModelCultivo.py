@@ -22,8 +22,18 @@ class Crop():
         self.__FirstIrrigHour=Irrighour
         self.__SecondIrrigHour=Irrighour
         self.__PrescriptionHour=PrescHour
+        self.__negotiationmode = False
         self.__pwp = pwp
         self.__fieldCapacity=fieldCapacity
+
+
+    @property 
+    def negotiation(self):
+        return self.__negotiationmode
+    
+    @negotiation.setter   
+    def negotiation(self,flag):
+        self.__negotiationmode = flag
 
 
     @property
