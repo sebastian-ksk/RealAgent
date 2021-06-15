@@ -55,7 +55,7 @@ class FIREBASE_CLASS():
             self.cropModel.presctime = self.Irrig_Presc['PrescriptionTime']
             self.cropModel.firstIrrigationtime = self.Irrig_Presc['IrrigationTime_1']
             self.cropModel.secondIrrigationtime = self.Irrig_Presc['IrrigationTime_2']
-
+            self.cropModel.negotiation = self.Irrig_Presc['Negotiation']
         else:
             print(u' irrigation-prescription No such document!')
             self.IrrPresDoc_ref.set({

@@ -100,8 +100,8 @@ class Main():
                 if self.duration_in_s >= self.TimePrescription:
                     self.xbeeComm.sendIrrigationOrder('SSTOPP;1;', self.agent)
                     try:
-                        self.FireBase.ResultIrrDoc_ref.update({
-                            u'irrigationApplied' : self.IrrigAplied 
+                        self.FB.ResultIrrDoc_ref.update({
+                            u'irrigationApplied' : float(self.IrrigAplied) 
                         })
                     except:
                         print('error update data irrigationApplied')
@@ -126,10 +126,13 @@ class Main():
             if  self.horNouwStr==self.cropModel.presctime: 
                 if self.FlagPrescriptionDone == False:
                     self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
-                    self.FB.ResultIrrDoc_ref.update({
-                            u'NetPrescription':self.ActualPrescription,
-                            u'LastPrescriptionDate' :str(self.today)      
-                    })
+                    try:
+                        self.FB.ResultIrrDoc_ref.update({
+                                u'NetPrescription':self.ActualPrescription,
+                                u'LastPrescriptionDate' :str(self.today)      
+                        })
+                    except:
+                        pass    
                     print(f'Prescription= {self.ActualPrescription}')
                     self.FlagPrescriptionDone=True    
 
@@ -137,10 +140,13 @@ class Main():
                 if self.FlagPrescriptionDone == False:
                     self.ActualPrescription=self.getPrescriptionData(self.cropModel.prescMode)
                     print(f'Prescription= {self.ActualPrescription}')
-                    self.FB.ResultIrrDoc_ref.update({
-                            u'NetPrescription':self.ActualPrescription,
-                            u'LastPrescriptionDate' :str(self.today)      
-                    })
+                    try:
+                        self.FB.ResultIrrDoc_ref.update({
+                                u'NetPrescription':self.ActualPrescription,
+                                u'LastPrescriptionDate' :str(self.today)      
+                        })
+                    except:
+                        pass    
                     self.FlagPrescriptionDone = True   
                 self.Report_Agent = self.AgentReport()
                 self.Mqtt.client.publish(f"Ag/{self.groundDivision}/Bloque_1/{self.agent}",f"{self.Report_Agent}",qos=2)     
@@ -148,20 +154,25 @@ class Main():
 
             if self.FlagPrescriptionDone == True:
                 
-                if self.cropModel.negotiation == True:   
-                    if self.Mqtt.FlagIrrigation == True:
+                if self.FlagirrigationAuthor == False:    
+                    
+                    if self.cropModel.negotiation == True:   
+                        if self.Mqtt.FlagIrrigation == True:
+                            self.TotalPrescription = self.ActualPrescription
+                            print(f'nuevo riego a aplicar {self.TotalPrescription }')
+                            self.Mqtt.FlagIrrigation = False
+                            self.FlagirrigationAuthor = True
+                        elif self.Mqtt.FlagNewIrrigation == True:  
+                            self.TotalPrescription = self.Mqtt.NewPrescription
+                            print(f'nuevo riego a aplicar {self.TotalPrescription }')
+                            self.Mqtt.FlagNewIrrigation = False
+                            self.FlagirrigationAuthor = True
+                    else:
+                        print('no negotiation ')
                         self.TotalPrescription = self.ActualPrescription
-                        self.Mqtt.FlagIrrigation = False
-                        self.FlagirrigationAuthor = True
-                    elif self.Mqtt.FlagNewIrrigation == True:  
-                        self.TotalPrescription = self.Mqtt.NewPrescription
-                        self.Mqtt.FlagNewIrrigation = False
-                        self.FlagirrigationAuthor = True
-                else:
-                    self.TotalPrescription = self.ActualPrescription
-                    self.FlagirrigationAuthor  = True          
+                        self.FlagirrigationAuthor  = True          
 
-                if self.FlagirrigationAuthor == True:
+                else:
                     self.horNouwStr = f'{datetime.now().hour}:{datetime.now().minute}'                    
                     if self.horNouwStr == self.cropModel.firstIrrigationtime or self.horNouwStr == self.cropModel.secondIrrigationtime :
                         if self.FlagTotalPrescApplied== False:
@@ -170,7 +181,7 @@ class Main():
                             self.SendPrescription = self.TotalPrescription/2
                             self.TimePrescription = self.calculationIrrigationTime(self.IrrigProperties._drippers,self.IrrigProperties._area,
                                 self.IrrigProperties._efficiency,self.IrrigProperties._nominalDischarge,self.SendPrescription)
-                            if self.TimePrescription > 20:
+                            if self.TimePrescription > 0:
                                 self.xbeeComm.sendIrrigationOrder(f'SITASK;1;{self.TimePrescription};', self.agent)
                                 self.FlagOrderIrrigSend = True
                                 self.HourSendIrrigOrder = datetime.now()

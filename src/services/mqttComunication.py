@@ -37,11 +37,11 @@ class MqttComunication():
             print(f'bandera mqtt {self.FlagAuth}' )
             self.FlagAuth = True
             #print(self.Authorization)
-            print('------------------------------')
-            print('received: ')
-            print('topic: %s' % message.topic)
-            print('payload: %s' % message.payload)
-            print('qos: %d' % message.qos)
+            # print('------------------------------')
+            # print('received: ')
+            # print('topic: %s' % message.topic)
+            # print('payload: %s' % message.payload)
+            # print('qos: %d' % message.qos)
             if self.data[0]=="Rp":                               #si el mensaje inicia como Rp 
                 self.FlagPetition=True                                #se activa bandera de peticcion   
             elif self.data[0]=="Irr":                            #si el mensaje inicia como Irr=Riego    
