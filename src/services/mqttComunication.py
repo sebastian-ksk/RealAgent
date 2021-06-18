@@ -32,10 +32,10 @@ class MqttComunication():
         #global Date_R,Fl_Irr,Fl_IrrN,NewPrescription,Fl_petp
         self.data=str(message.payload).split("'")[1].split(":")  #split mensaje con ":"
         self.topic=str(message.topic).split("/")[0]
-        print('llego')
+        #print('llego')
         if self.topic=="PmS":
-            print(f'bandera mqtt {self.FlagAuth}' )
-            self.FlagAuth = True
+            #print(f'bandera mqtt {self.FlagAuth}' )
+            # self.FlagAuth = True
             #print(self.Authorization)
             # print('------------------------------')
             # print('received: ')

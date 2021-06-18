@@ -1,0 +1,99 @@
+Fecha	Hora de riego	Cantidad				Descripcion	Rain(mm)
+		"Tratamiento 1
+150% (s)"	"Tratamiento 2
+100% (s)"	"Tratamiento 3
+100% (s)"	"Tratamiento 4
+60% (s)"		
+2019-09-01							2
+2019-09-18							11
+2019-09-20							20
+2019-09-21							1
+2019-09-22							7
+2019-09-24							7
+2019-09-28							13
+2019-09-29							4
+2019-10-03							10
+2019-10-10							4
+2019-10-12							9
+2019-10-18							15
+2019-10-21							2
+2019-10-22							11
+2019-10-23							33
+2019-10-24							19
+2019-10-25							4
+2019-10-27							4
+2019-11-01							6
+2019-11-02							2
+2019-11-09							27
+2019-11-10							14
+2019-11-11							33
+2019-11-12							18
+2019-11-15							2
+2019-11-16							1,5
+2019-11-17							5,1
+2019-11-19							2
+2019-11-20							10
+2019-11-21							7
+2019-11-29							14,5
+2019-12-07							4
+2019-12-08							1
+2019-12-13							2
+2019-12-14							6,8
+2019-12-15							25
+2019-12-29							19,5
+2020-01-21							9
+2020-01-24							4
+2020-01-25							3
+2020-01-26							5
+2020-01-27	15:55:00	2160	1500	1500	900	Para el tratamiento 1 empieza a las 4:16, el T2 y T3 empieza a las 4:05, T4 a las 3:55	8
+2020-01-30	09:00:00	2160	1500	1500	900	Para el tratamiento 1 empieza a las 4:16, el T2 y T3 empieza a las 4:05, T4 a las 3:55	0
+2020-01-31	15:10:00	2160	1500	1500	900	Se envio un pulso con las mismas prescripciones que los anteriores	0
+2020-02-04	15:00:00	2160	1500	1500	900	Se enviaron dos pulsos con las mismas prescripcion	0
+	18:00:00	2160	1500	1500	900		
+2020-02-05	15:30:00	2160	1500	1500	900	Se enviaron dos pulsos con las mismas prescripcion	0
+	17:04:00	2160	1500	1500	900		
+2020-02-06	15:44:00	2160	1500	1500	900	Se envio un pulso con las mismas prescripciones que los anteriores	0
+2020-02-07	15:27:00	2160	1500	1500	900	Se envio un pulso con las mismas prescripciones que los anteriores	0
+2020-02-08	N/A	0	0	0	0	No se enviaron pulsos porque llovió	2,8
+2020-02-09	N/A	0	0	0	0	No se envió pulso	0
+2020-02-10	15:30:00	2160	1500	1500	900	Se envio un pulso con las mismas prescripciones que los anteriores	0
+2020-02-11	14:35:00	2160	1500	1500	900	Se enviaron dos pulsos con las mismas prescripcion	0
+	15:48:00	2160	1500	1500	900		
+2020-02-12	15:00:00	2160	1500	1500	900	Se envio un pulso con las mismas prescripciones que los anteriores	0
+2020-02-13	N/A	0	0	0	0	No se envió pulso	0
+2020-02-14	N/A	0	0	0	0	No se envió pulso	0
+2020-02-15	13:00:00	2160	1500	1500	900	Se enviaron dos pulsos con las mismas prescripcion	0
+	17:40:00	2160	1500	1500	900		
+2020-02-16	N/A	0	0	0	0	No se envió pulso	0
+2020-02-17	16:06:00	2160	1500	1500	900	Se enviaron dos pulsos con las mismas prescripcion	0
+	17:10:00	2160	1500	1500	900		
+2020-02-18	15:48:00	2160	1500	1500	900	Se envio un pulso con las mismas prescripciones que los anteriores	0
+2020-02-19	17:20:00	2160	1500	1500	900	Se envio un pulso con las mismas prescripciones que los anteriores	0
+2020-02-20	15:09:00	1160	1140	1140	684	Se enviaron prescripciones de riego según laminas de agronomía	0
+2020-02-21	10:00:00	938	620	620	375	Se enviaron prescripciones de riego según laminas de agronomía, en la tarde llovió	11,4
+2020-02-23	N/A	0	0	0	0	Llovio	5
+2020-02-24							7,3
+2020-02-25						No se envio prescripció porque llovió	1,8
+2020-02-26						No se envió pulso en la mañana, en la tarde no se pudo enviar pulsos con la prescripción porque el distrito no abrió valvulas para regar	0
+2020-02-27	15:13:00	958	286	639	383	"En la mañana no se rego porque la tubería del muñeco se salió, en la tarde se rego a las 3:13.
+Empezo a llover a las 4:15 aprox.
+"	12
+2020-02-28		0	0	0	0	No se regó porque los sensores del suelo indicaban que el suelo todavia mantenia humedad	0
+2020-02-29		946	631	631	379	Se envió la prescripción de riego en la mañana	0
+2020-03-01						No se rego	0
+2020-03-02		944	629	629	378	Se riega en la mañana en la tarde llueve	3,2
+2020-03-03						No se riega porque el terreno presenta humedad	0
+2020-03-04	Tarde	932	621	621	373	No se pudo enviar prescripción en la mañana, se envian dos pulsos con la misma prescripción en la tarde	0
+	Tarde						
+2020-03-05		948	632	632	379		0
+2020-03-06		965	643	643	386		0
+2020-03-07		978	652	652	391		0
+2020-03-08		953	635	635	381		7,5
+2020-03-09		954	636	636	382	No se riega en la mañana	2
+2020-03-10						No se riega porque llovió	8
+2020-03-11						No se riega porque llovió	4
+2020-03-12						No se riega porque llovió en la mañana	
+2020-03-13		1026	684	684	410		21
+2020-03-14						No se riego porque llovió	24
+2020-03-15						No se riega	13
+2020-03-16						No se riega porque llovió	1,5

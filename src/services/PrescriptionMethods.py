@@ -123,7 +123,7 @@ class prescriptionMethods():
             self.Irrigation = float(self.DataIrrDep_Lastday[3]) #toma el riego de el dia anterior
             self.depletion = float(self.DataIrrDep_Lastday[4])  #toma el ddeficit de el dia anterior  cuento ha disminuido 
             print(f'Irrigation last day: {self.Irrigation}')
-            print(f'Irrigation last day: {self.depletion}')
+            print(f'depletion last day: {self.depletion}')
         else:
             self.Irrigation=0       
             self.depletion=0

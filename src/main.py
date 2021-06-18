@@ -9,6 +9,9 @@ from model.ModelPrescriptionResult import PrescriptionResults
 from services.mqttComunication import MqttComunication
 from services.xbeeCommunication import XbeeCommunication
 from services.PrescriptionMethods import prescriptionMethods
+
+from AquaCrop_OsPy.AquaCrop_OsPy.AquaCrop_OS_v5 import AquaCrop_os
+
 '''
 librerias externas al sistema 
 '''
@@ -52,7 +55,7 @@ class Main():
         self.schedWeatherSatation.start()
 
         self.schedRebootAgent = BackgroundScheduler()
-        self.schedRebootAgent.add_job(self.RebootAgent, 'cron',  hour = 23, minute = 57)
+        self.schedRebootAgent.add_job(self.RebootAgent, 'cron',  hour = 23, minute = 50)
         self.schedRebootAgent.start()
 
         
@@ -238,7 +241,8 @@ class Main():
             self.realIrrigAplication = 0
             
         self.SaveFile = open(self.fileRealIrrigAplication, 'a',errors='ignore')
-        self.SaveFile.write(f'{str(datetime.now()).split()[0]},{str(datetime.now()).split()[1]},{self.TotalPrescription},{self.realIrrigAplication},{self.prescriptionResult._deficit}\n')
+        print(f'deficit {self.prescriptionResult.allDataPrescription[4]}')
+        self.SaveFile.write(f'{str(datetime.now()).split()[0]},{str(datetime.now()).split()[1]},{self.TotalPrescription},{self.realIrrigAplication},{self.prescriptionResult.allDataPrescription[4]}\n')
         self.SaveFile.close()
         self.FlagPrescriptionDone == True    
         self.FlagTotalPrescApplied= True

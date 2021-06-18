@@ -73,10 +73,10 @@ class XbeeCommunication():
             self.sensors.allSensors = [float(x) for x in self.messageSens[1:len(self.messageSens)-1] ]
             for x in range(0,4):
                 self.sensors.allSensors[x] = round(self.calc_volumetricWaterContent(self.sensors.allSensors[x],4.75),2)
-            print(f'All Sensors : {self.sensors.allSensors}')
+            
             if self.sensors.allSensors[4] >= 125:
-                print('wrong sensors temp')
                 self.sensors.allSensors[4] = self.sensors.allSensors [8] 
+            print(f'All Sensors : {self.sensors.allSensors}')
             if self.ContsensorReport == 12:
                 self.ContsensorReport=0   
                 try:
