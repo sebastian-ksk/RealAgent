@@ -10,7 +10,7 @@ from services.mqttComunication import MqttComunication
 from services.xbeeCommunication import XbeeCommunication
 from services.PrescriptionMethods import prescriptionMethods
 
-from AquaCrop_OsPy.AquaCrop_OsPy.AquaCrop_OS_v5 import AquaCrop_os
+from AquaCrop_OsPy.AquaCrop_OsPy.AquaCrop_OS_v5  import AquaCrop_os
 
 '''
 librerias externas al sistema 
@@ -21,7 +21,7 @@ from datetime import datetime, date, time, timedelta #para fechas y hora
 import time as timedelay #para cronometrar tiempo
 from threading import Thread
 
-import sys
+import sys,os
 print (sys.path)
 import requests
 import json
@@ -58,13 +58,43 @@ class Main():
         self.schedRebootAgent.add_job(self.RebootAgent, 'cron',  hour = 23, minute = 50)
         self.schedRebootAgent.start()
 
+        self.schedWeatherStation_2 = BackgroundScheduler()
+        self.schedWeatherStation_2.add_job(self.Station_2, 'cron',  hour = 23, minute = 33)
+        self.schedWeatherStation_2.start()
         
+        """        
+         self.schedPres_Aqucarop = BackgroundScheduler()
+        self.schedPres_Aqucarop.add_job(self.Pres_Aquacrop, 'cron', hour = 0,  minute =1)
+        self.schedPres_Aqucarop.start() 
+        """
+        
+        self.schedWeatherStation_0m = BackgroundScheduler()
+        self.schedWeatherStation_0m.add_job(self.Station_15m, 'cron',   minute =0)
+        self.schedWeatherStation_0m.start()
+        
+        
+        self.schedWeatherStation_15m = BackgroundScheduler()
+        self.schedWeatherStation_15m.add_job(self.Station_15m, 'cron',   minute =15)
+        self.schedWeatherStation_15m.start()
+        
+        self.schedWeatherStation_30m = BackgroundScheduler()
+        self.schedWeatherStation_30m.add_job(self.Station_15m, 'cron',   minute =30)
+        self.schedWeatherStation_30m.start()
+        
+        
+        self.schedWeatherStation_45m = BackgroundScheduler()
+        self.schedWeatherStation_45m.add_job(self.Station_15m, 'cron',   minute =45)
+        self.schedWeatherStation_45m.start()
+
+
+        self.AquaCrop_os = AquaCrop_os()
+
+        self.Path_Data = '/home/pi/Desktop/RealAgent/src/storage'
         #modelo defaul del cultivo
         self.cropModel = Crop("Maize",20,80,"Moisture_Sensor",11,date(2020,1,1),'00:00',"00:00")
         #modelo propiedades de riego
         self.IrrigProperties = irrigation_properties()
-
-
+	
         print('-- firebase -- ')
         #conexion a firebase y actualizacion de datos
         self.FB=FIREBASE_CLASS(f'{self.groundDivision}_{self.agent}',self.cropModel,self.IrrigProperties)
@@ -96,12 +126,14 @@ class Main():
         self.IrrigAplied = 0
         self.TotalPrescription = 0
         self.FlagTotalPrescApplied= False
+        self.SendPrescription = 0
         while True:  
             if self.FlagOrderIrrigSend == True:
                 self.CurrentTime = datetime.now()
                 self.duration_in_s = (self.CurrentTime-self.HourSendIrrigOrder).total_seconds()
                 if self.duration_in_s >= self.TimePrescription:
                     self.xbeeComm.sendIrrigationOrder('SSTOPP;1;', self.agent)
+                    self.xbeeComm.save_data_Xbee(f"{self.Path_Data}/RegisterIrrigation.txt",self.SendPrescription)   
                     try:
                         self.FB.ResultIrrDoc_ref.update({
                             u'irrigationApplied' : float(self.IrrigAplied) 
@@ -188,6 +220,11 @@ class Main():
                                 self.xbeeComm.sendIrrigationOrder(f'SITASK;1;{self.TimePrescription};', self.agent)
                                 self.FlagOrderIrrigSend = True
                                 self.HourSendIrrigOrder = datetime.now()
+                            else:
+                                self.xbeeComm.save_data_Xbee(f"{self.Path_Data}/RegisterIrrigation.txt",self.SendPrescription)  
+                        
+                           
+                               
                             self.IrrigAplied = self.IrrigAplied + self.SendPrescription
                             
                             print(f'riego aplicado: {self.IrrigAplied}')
@@ -219,7 +256,12 @@ class Main():
         if prescriptionMode=='Moisture_Sensors':
             self.prescription=self.presc_Meth.Moisture_Sensor_Presc()
         elif prescriptionMode=='Weather_Station':            
-            self.prescription=self.presc_Meth.Weather_Station_presc(self.cropModel.dayscrop)
+            self.prescription = self.presc_Meth.Weather_Station_presc(self.cropModel.dayscrop)
+        elif prescriptionMode=='Better':
+            print('Better Prescription')
+            self.prescription = self.AquaCrop_os.Pres_Aquacrop()
+            self.prescriptionResult.allDataPrescription = self.AquaCrop_os.return_data()
+
         else:
             self.prescription = 1
         return self.prescription    
@@ -250,6 +292,15 @@ class Main():
         self.Mqtt.FlagNewIrrigation=False
         print('Agent ReStart...')
 
+    def Station_2(self):
+        os.system('python3 /home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy/Station_2.py')
+        return
+    def Station_15m(self):
+        print('station_15m')
+        os.system('python3 /home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy/Station_15m.py')
+        os.system('python3 /home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy/calculate_vwc.py')
+        return    
+   
 
 
 

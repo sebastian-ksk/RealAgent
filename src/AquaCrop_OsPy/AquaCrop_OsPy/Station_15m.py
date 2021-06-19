@@ -26,11 +26,12 @@ api="https://api.weatherlink.com/v1/NoaaExt.json?user="+DID+"&pass="+ownerpass+"
 # text=r.text
 # print(text)
 # text=text.split()
-dir_actual='/home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPyg'
+dir_actual='/home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy'
 dir_T=dir_actual+"/Date_Weather_station/Intelligent_Irrigation.csv"
 dir_weather=dir_actual+'/Date_Weather_station/Weather_station_15m.csv'
 dir_rain=dir_actual+'/Date_Weather_station/Rain_2014_2021.txt'
 dir_weather2=dir_actual+'/Date_Weather_station/Weather_station_3.csv'
+
 
 def tabla(dir_T):
     df=pd.DataFrame()              #Dataset temperature max
