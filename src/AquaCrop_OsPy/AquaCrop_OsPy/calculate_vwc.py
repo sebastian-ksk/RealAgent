@@ -174,7 +174,6 @@ class  calculo_vwc():
             depl_1=float(depl_1[2])
         else:
             depl_1=deple
-        # print('depl e un timepo anterior',depl_1)
         if str(depl_1)=='nan' :
             depl_1=0
         if str(rain)=='nan':
@@ -190,10 +189,11 @@ class  calculo_vwc():
         # if n==1:
         #     depl_1=((Fc-vwc_1)/100)*L1
         # else:
-        #     depl_1=((Fc-vwc_1)/100)*(L-root)            
+        #     depl_1=((Fc-vwc_1)/100)*(L-root)    
         depl=depl_1-rain-irr+etc
         # if depl<0:
         #     depl=0
+
         vwc= Fc-((depl/L)*100)
         return round(depl,3),round(vwc,3),round(depl_1,3),Fc
     #vwc_15m(self,Lv,porcentaje del tratamiento)
@@ -247,16 +247,12 @@ class  calculo_vwc():
         h_irr = datetime.strptime(day+' 12:10:00', "%Y-%m-%d %H:%M:%S")    
         try:
             # autommatico 
-            print('ingresa')        
             with open('/home/pi/Desktop/RealAgent/src/storage/RegisterIrrigation.txt','r',errors='ignore') as fin:
                 a = fin.read().splitlines(True)
-                print(a)
             h_Auto=a[len(a)-1].split(',')
-            print(h_Auto)
             aux_hh=h_Auto[1].split(':')
             h_Auto[1]= aux_hh[0]+':'+aux_hh[1]+':00'
             h_irr1 = datetime.strptime(h_Auto[0]+' '+h_Auto[1], "%Y-%m-%d %H:%M:%S")  
-            print(h_irr1)  
             irr1 = self.hour_irr(h1,h2,h_irr1)
             irr2 = False
             irr3 = False
@@ -284,14 +280,14 @@ class  calculo_vwc():
         dfIrr=dfIrr.fillna(0)
         DAYS_CROP=data[16].split()
         DAYS_CROP=DAYS_CROP[1]
-        L1=data[25].split()
-        L2=data[26].split()
+
         fc1020=data[27].split()
         pwp1020=data[28].split()          
         pwp1020=float(pwp1020[1])
         fc1020=float(fc1020[1])
-        L1=float(L2[1])
-        L2=float(L2[1])  
+        L1=round(float(data[25].split()[1])*1000,3)
+        L2=round(float(data[26].split()[1])*1000,3)
+        
         day=int(data[19].split()[1])   
         date1=datetime.strptime(SEED_TIME, "%Y-%m-%d")
         date2=datetime.strptime(date, "%Y-%m-%d")
@@ -353,7 +349,7 @@ class  calculo_vwc():
         # irr=4
         etc=round(d_et0*Kc,3)
         # print('d_et0',d_et0)
-        # print('d_rain',d_rain,'irr',irr,'etc',etc,'fc1010',fc1010,'L',L1)
+        #print('d_rain',d_rain,'irr',irr,'etc',etc,'fc1010',fc1010,'L',L1)
         if Lv=='1':            
             depl,vwc_1,depl_1,Fc=self.calcular_vwc(Lv,deple,d_rain,irr,etc,fc1010,L1)
             if vwc_1 >= float(sat):
@@ -367,7 +363,6 @@ class  calculo_vwc():
             # out.write("data\thour\tdepl\tvwc\tdepl_t1\td_rain\tirr\tetc\tFc\tL\n")
             out.write(str(t1[0])+'\t'+str(t1[1])+'\t'+str(depl)+'\t'+str(vwc_1)+'\t'+str(depl_1)+'\t'+str(d_rain)+'\t'+str(irr)+'\t'+str(etc)+'\t'+str(Fc)+'\t'+str(L1)+'\n')
             out.close()
-#             print('WC1\t',vwc_1)
 
         else:
             f=0.3
@@ -386,7 +381,6 @@ class  calculo_vwc():
             # out.write("data\thour\tdepl\tvwc\tdepl_t1\td_rain\tirr\tetc\tFc\tL\tvwc2\n")
             out.write(str(t1[0])+'\t'+str(t1[1])+'\t'+str(depl)+'\t'+str(vwc_1)+'\t'+str(depl_1)+'\t'+str(d_rain)+'\t'+str(irr)+'\t'+str(etc)+'\t'+str(Fc)+'\t'+str(L1)+'\t'+str(vwc_2)+'\n')
             out.close()
-#             print('WC2\t',vwc_2)
 
 
 # 

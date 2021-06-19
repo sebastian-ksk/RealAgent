@@ -1,4 +1,6 @@
-
+import requests
+import json
+import urllib
 import sys
 from digi.xbee.devices import XBeeDevice, RemoteXBeeDevice,XBee64BitAddress,OperatingMode,RemoteATCommandPacket
 from datetime import datetime, date, time, timedelta #para fechas y hora
@@ -8,9 +10,12 @@ from datetime import datetime, date, time, timedelta #para fechas y hora
 class XbeeCommunication():
     Path_Data=""
     
-    def __init__(self, UsbDirection, baudRate,sensors, firebase):
+    def __init__(self, UsbDirection, baudRate,sensors, firebase,numberAgent,timeIrrig,PrescIrrig):
         self.FireBase = firebase
         self.ContsensorReport = 0 
+        self.numberAgent = numberAgent
+        self.timeIrrig = timeIrrig
+        self.PrescIrrig = PrescIrrig
         self.FlagReceivedOrder = [False,False]
         self.numberReceivedOrders = 0
         self.FlagCompletedOrder = [False,False] 
@@ -43,7 +48,7 @@ class XbeeCommunication():
         if self.message[0] == 'IRRIG':
             if self.message[1].split(";")[0]=="COMPLETE":
                 print('End Irrigation')
-                self.save_data_Xbee(f"{self.Path_Data}/Irrigation_finished.txt",self.message[1])             
+                self.save_data_Xbee(f"{self.Path_Data}/Irrigation_finished.txt",self.message[1].split('\x00')[0])             
                 self.numberCompletedOrders += 1
                 try:
                     self.FireBase.ResultIrrDoc_ref.update({
@@ -76,7 +81,37 @@ class XbeeCommunication():
             
             if self.sensors.allSensors[4] >= 125:
                 self.sensors.allSensors[4] = self.sensors.allSensors [8] 
+            
+            #
+            
+            self.file_HiD= open('/home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy/SensorsData/CalSensorData1.txt', 'r',errors='ignore')
+            self.data = self.file_HiD.read().splitlines()
+            self.file_HiD.close
+            self.DataSensSimulate = self.data[-1].split('\t')
+            self.vwcSimulate1 =  self.DataSensSimulate[3]
+            self.file_HiD= open('/home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy/SensorsData/CalSensorData2.txt', 'r',errors='ignore')
+            self.data = self.file_HiD.read().splitlines()
+            self.file_HiD.close
+            self.DataSensSimulate = self.data[-1].split('\t')
+            self.vwcSimulate2 =  self.DataSensSimulate[10]    
+
+
+            self.sensors.allSensors[0] = self.vwcSimulate1
+            self.sensors.allSensors[1] = self.vwcSimulate2
             print(f'All Sensors : {self.sensors.allSensors}')
+            now = datetime.now() 
+            dateHour = str(now.strftime("%Y-%m-%d %H:%M:%S")) 
+            self.Allsensors = self.sensors.allSensors
+            data={"user":"Angel",
+            "Treatment": self.numberAgent,
+            "Longitude":float(5.5),
+            "Latitude":float(-78.4),
+            "SM_1":self.Allsensors[0],"SM_2":float(self.Allsensors[1]),"SM_3":float(self.Allsensors[3]),
+            "Env_Temp":float(self.Allsensors[4]),"RH":float(self.Allsensors[5]),"CO2":float(self.Allsensors[6]),
+            "Canopy_Temp":float(self.Allsensors[7]),"CS_Temp":float(self.Allsensors[8]),"Irrig_Pres_Rate":float(self.PrescIrrig),
+            "Irrig_Pres_Time":float(self.timeIrrig),"Date_Time":dateHour}
+            requests.post(url="http://104.248.53.140:8080/sPostV3.php",json=data)  
+
             if self.ContsensorReport == 12:
                 self.ContsensorReport=0   
                 try:
@@ -125,7 +160,7 @@ class XbeeCommunication():
         #  hour=str(time.strftime("%H:%M:%S")) 
         #  day=str(time.strftime("%Y-%m-%d"))
         #  dy=str(day)+" "+str(hour)
-        #  data={"user":"Angel","Treatment":3,"Longitude":float(5.5),"Latitude":float(-78.4),"SM_1":float(data0[2]),"SM_2":float(data0[3]),"SM_3":float(data0[4]),"Env_Temp":float(data0[5]),"RH":float(data0[6]),"CO2":float(data0[7]),"Canopy_Temp":float(data0[8]),"CS_Temp":float(data0[9]),"Irrig_Pres_Rate":0.0,"Irrig_Pres_Time":0.0,"Date_Time":str(dy)}
+        #  data={"user":"Angel","Treatment":3,"Longitude":float(5.5),"Latitude":float(-78.4),"SM_1":float(self.Allsensors [2]),"SM_2":float(self.Allsensors [3]),"SM_3":float(self.Allsensors [4]),"Env_Temp":float(self.Allsensors [5]),"RH":float(self.Allsensors [6]),"CO2":float(self.Allsensors [7]),"Canopy_Temp":float(self.Allsensors [8]),"CS_Temp":float(self.Allsensors [9]),"Irrig_Pres_Rate":0.0,"Irrig_Pres_Time":0.0,"Date_Time":str(dy)}
         #  requests.post(url="http://104.248.53.140:8080/sPostV3.php",json=data)  
 #............. Felipe and Sebastian Equation
     #    if self._sensorVoltage<=1.34:

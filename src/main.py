@@ -44,6 +44,10 @@ class Main():
         self.TimePrescription = 0
         self.TotalPrescription = 0
         self.HourSendIrrigOrder = datetime.now()
+        self.IrrigAplied = 0
+        self.TotalPrescription = 0
+        self.FlagTotalPrescApplied= False
+        self.SendPrescription = 0
 
         self.fileRealIrrigAplication = '/home/pi/Desktop/RealAgent/src/storage/RealIrrigationApplication.txt'
        
@@ -97,7 +101,7 @@ class Main():
 	
         print('-- firebase -- ')
         #conexion a firebase y actualizacion de datos
-        self.FB=FIREBASE_CLASS(f'{self.groundDivision}_{self.agent}',self.cropModel,self.IrrigProperties)
+        self.FB=FIREBASE_CLASS(f'{self.groundDivision}_{self.agent}',self.cropModel,self.IrrigProperties,)
         #Modelo de sensores 
         self.sensors = Sensors(self.cropModel.typeCrop,'0x000000000')
         print(f'niveles de sensores: { self.sensors._SensorsLevels}' )
@@ -111,7 +115,7 @@ class Main():
         timedelay.sleep(5)
 
         print('---------XbeeCommunication --------------------')
-        self.xbeeComm = XbeeCommunication("/dev/ttyUSB0",9600,self.sensors,self.FB)
+        self.xbeeComm = XbeeCommunication("/dev/ttyUSB0",9600,self.sensors,self.FB,self.agent,self.TimePrescription,self.IrrigAplied)
         self.subproces_XbeeCallBack=Thread(target=self.xbeeComm.runCallback)
         self.subproces_XbeeCallBack.daemon=True
         self.subproces_XbeeCallBack.start()
@@ -123,10 +127,7 @@ class Main():
         print('init program')
         self.todayMemory =  date(2021,3,6)
         #self.todayMemory = date(datetime.now().year,datetime.now().month,datetime.now().day)
-        self.IrrigAplied = 0
-        self.TotalPrescription = 0
-        self.FlagTotalPrescApplied= False
-        self.SendPrescription = 0
+
         while True:  
             if self.FlagOrderIrrigSend == True:
                 self.CurrentTime = datetime.now()

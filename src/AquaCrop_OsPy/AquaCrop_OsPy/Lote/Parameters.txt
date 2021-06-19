@@ -24,7 +24,7 @@ root depth             NaN
 TAW                    NaN
 MAE                    NaN
 L1                  0.1
-L2                  0.12
+L2                  0.1
 FC1020              45.737
 PWP1020             25.47
 Name: 14, dtype: object
