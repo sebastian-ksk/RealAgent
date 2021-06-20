@@ -1178,9 +1178,61 @@ class AquaCrop_os():
         semiautpres.close()
         print('sale save')
         return  
+    def negotiaion_Aq(self,n_irr):
+        n_irr=float(n_irr)
+        print('Riego negociado')
+        with open(out_path+'/Parameters.txt','r',errors='ignore') as fin:
+            data = fin.read().splitlines(True)
+        Area=data[3].split()[1]
+        """         
+        #convierte m3 a mm
+        print('Area',Area)
+        n_irr=(n_irr*1000)/(Area*0.8)
+        print('self.prescription',n_irr)
+        """
+   
+        day=self.day_seed_time()
 
+        #actualiza lod datos de con el nuevo riego
+        df_better=pd.read_csv(out_path+'/Agent_Better.csv',sep='\t')
+        df_better.loc[day,'Prescription(mm)']=df_better.loc[day,'Irrigation(mm)']
+        df_better.loc[day,'Irrigation(mm)']= n_irr
+        df_better.loc[day,'Negotiation']= 1
+        df_better.to_csv(out_path+'/Agent_Better.csv',index=False,header=True, sep='\t',float_format="%.2f")
+        #simula parametros de rendimeinto 
+        self.main(path_AQ_os,out_path,'Agent_Better',day)
+
+        #actualiza los paraemtros de riego  y rendimiento 
+        df_better=pd.read_csv(out_path+'/Agent_Better.csv',sep='\t')
+        
+        df_ET0=pd.read_csv(out_path+'/Weather_Station_pres.csv',sep='\t')
+        df_ET0.loc[day,'Prescription(mm)']=df_ET0.loc[day,'Irrigation(mm)']
+        df_ET0.loc[day,'Irrigation(mm)']= n_irr
+        df_ET0.loc[day,'Total irrigation']=df_better.loc[day,'Total irrigation']
+        df_ET0.loc[day,'Yiel(ton/ha)']=df_better.loc[day,'Yiel(ton/ha)']
+        df_ET0.loc[day,'IWUE (Kg/m3)']=df_better.loc[day,'IWUE (Kg/m3)']
+        df_ET0.loc[day,'WUE (Kg/m3)']=df_better.loc[day,'WUE (Kg/m3)']
+        df_ET0.loc[day,'WC1']=df_better.loc[day,'WC1']
+        df_ET0.loc[day,'WC2']=df_better.loc[day,'WC2']
+        
+        df_ET0.to_csv(out_path+'/Weather_Station_pres.csv',index=False,header=True, sep='\t',float_format="%.2f")
+
+        df_vwc=pd.read_csv(out_path+'/VWC_pres.csv',sep='\t')
+        df_vwc.loc[day,'Prescription(mm)']=df_vwc.loc[day,'Irrigation(mm)']
+        df_vwc.loc[day,'Irrigation(mm)']= n_irr
+        df_vwc.loc[day,'Total irrigation']=df_better.loc[day,'Total irrigation']
+        df_vwc.loc[day,'Yiel(ton/ha)']=df_better.loc[day,'Yiel(ton/ha)']
+        df_vwc.loc[day,'IWUE (Kg/m3)']=df_better.loc[day,'IWUE (Kg/m3)']
+        df_vwc.loc[day,'WUE (Kg/m3)']=df_better.loc[day,'WUE (Kg/m3)']
+        df_vwc.loc[day,'WC1']=df_better.loc[day,'WC1']
+        df_vwc.loc[day,'WC2']=df_better.loc[day,'WC2']       
+        df_vwc.to_csv(out_path+'/VWC_pres.csv',index=False,header=True, sep='\t',float_format="%.2f")
+
+        print('sale de negociacion')        
+        return 
 """ 
 Aq=AquaCrop_os()
+Aq.negotiaion_Aq(0)
 Aq.Pres_Aquacrop()  #simulacion
 Aq.return_data() # leer simulacion
 """

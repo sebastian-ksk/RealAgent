@@ -1,3 +1,4 @@
+#created by: sebastian castellanos
 from data.ApiServiceEstacionMet import ApiServiceEstacionMet 
 from data.FireBase import FIREBASE_CLASS
 from model.ModelVarMeTereologica import meteorologicalData as DatMet
@@ -35,8 +36,10 @@ class Main():
         super(Main,self).__init__()
         '''inicializacion de datos'''
         print('init data')
-        self.groundDivision = "Tibasosa"
         
+        self.groundDivision = "Tibasosa"
+
+
         self.agent = int(input('ingrese el numero del agente : '))
         self.FlagPrescriptionDone = False
         self.FlagOrderIrrigSend = False
@@ -91,9 +94,11 @@ class Main():
         self.schedWeatherStation_45m.start()
 
 
-        self.AquaCrop_os = AquaCrop_os()
+        
 
         self.Path_Data = '/home/pi/Desktop/RealAgent/src/storage'
+        print('Aquacrop Init...')
+        self.AquaCrop_os = AquaCrop_os()
         #modelo defaul del cultivo
         self.cropModel = Crop("Maize",20,80,"Moisture_Sensor",11,date(2020,1,1),'00:00',"00:00")
         #modelo propiedades de riego
@@ -111,7 +116,7 @@ class Main():
         self.presc_Meth =  prescriptionMethods(self.cropModel,self.sensors,self.prescriptionResult,self.apiServiceMet) #inicializacion de metodos de prescripcion
         self.presc_Meth.Moisture_Sensor_Presc()
         '''========Inicializacion de Protocolos de comunicacion ====='''
-        self.Mqtt = MqttComunication(self.agent, self.groundDivision)
+        self.Mqtt = MqttComunication(self.agent, self.groundDivision,self.AquaCrop_os)
         timedelay.sleep(5)
 
         print('---------XbeeCommunication --------------------')
@@ -199,7 +204,7 @@ class Main():
                             self.Mqtt.FlagIrrigation = False
                             self.FlagirrigationAuthor = True
                         elif self.Mqtt.FlagNewIrrigation == True:  
-                            self.TotalPrescription = self.Mqtt.NewPrescription
+                            self.TotalPrescription = self.Mqtt.NewPrescription  # mm
                             print(f'nuevo riego a aplicar {self.TotalPrescription }')
                             self.Mqtt.FlagNewIrrigation = False
                             self.FlagirrigationAuthor = True
@@ -259,7 +264,7 @@ class Main():
         elif prescriptionMode=='Weather_Station':            
             self.prescription = self.presc_Meth.Weather_Station_presc(self.cropModel.dayscrop)
         elif prescriptionMode=='Better':
-            print('Better Prescription')
+            print('Better Prescription wait ...')
             self.prescription = self.AquaCrop_os.Pres_Aquacrop()
             self.prescriptionResult.allDataPrescription = self.AquaCrop_os.return_data()
 

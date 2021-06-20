@@ -1,13 +1,13 @@
-CODE             Tibasosa1
-LAT                5.78291
-LON               -73.1047
-AREA               7841.31
-CLAY                 26.72
-SILT                 54.61
-SAND                 18.19
-SP                   58.95
-FC1010              46.373
-PWP1010             26.013
+CODE             Tibasosa4
+LAT                5,77377
+LON               -72,9844
+AREA              2263.390
+CLAY                 22.32
+SILT                 55.23
+SAND                 23.58
+SP                   58.94
+FC1010              46.473
+PWP1010             26.040
 HC                    1.07
 DENSITY               1.14
 TYPE SOIL         SiltLoam

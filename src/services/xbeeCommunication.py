@@ -22,7 +22,7 @@ class XbeeCommunication():
         self.numberCompletedOrders = 0
         self.XbeesValvesSystem={'Agent_1': '0013A20041573102', 
         'Agent_2': '0013A20040D8D9C4',
-        'Agent_3': '0013A20040E7412C',
+        'Agent_3': '0013A20040DB569B',
         'Agent_4': '0013A20040E8816B'}
         print('xbee  ')
         self.sensors = sensors
@@ -43,9 +43,9 @@ class XbeeCommunication():
     def data_receive_callback(self, xbee_message):
         self.message=str(xbee_message.data.decode()).split(':')
         print(str(datetime.now()).split()[1])
-        print(str(xbee_message.data.decode()))
         self.today = date(datetime.now().year,datetime.now().month,datetime.now().day)
         if self.message[0] == 'IRRIG':
+            print(str(xbee_message.data.decode()))
             if self.message[1].split(";")[0]=="COMPLETE":
                 print('End Irrigation')
                 self.save_data_Xbee(f"{self.Path_Data}/Irrigation_finished.txt",self.message[1].split('\x00')[0])             
@@ -76,6 +76,7 @@ class XbeeCommunication():
             self.messageSens = self.message[1].split('\x00')[0].split('End')[0].split(',')
             self.save_data_Xbee(f"{self.Path_Data}/Sensor_data.txt",self.message[1].split('\x00')[0].split('End')[0])
             self.sensors.allSensors = [float(x) for x in self.messageSens[1:len(self.messageSens)-1] ]
+            
             for x in range(0,4):
                 self.sensors.allSensors[x] = round(self.calc_volumetricWaterContent(self.sensors.allSensors[x],4.75),2)
             
@@ -94,47 +95,51 @@ class XbeeCommunication():
             self.file_HiD.close
             self.DataSensSimulate = self.data[-1].split('\t')
             self.vwcSimulate2 =  self.DataSensSimulate[10]    
-
-
             self.sensors.allSensors[0] = self.vwcSimulate1
             self.sensors.allSensors[1] = self.vwcSimulate2
+
             print(f'All Sensors : {self.sensors.allSensors}')
-            now = datetime.now() 
-            dateHour = str(now.strftime("%Y-%m-%d %H:%M:%S")) 
-            self.Allsensors = self.sensors.allSensors
-            data={"user":"Angel",
-            "Treatment": self.numberAgent,
-            "Longitude":float(5.5),
-            "Latitude":float(-78.4),
-            "SM_1":self.Allsensors[0],"SM_2":float(self.Allsensors[1]),"SM_3":float(self.Allsensors[3]),
-            "Env_Temp":float(self.Allsensors[4]),"RH":float(self.Allsensors[5]),"CO2":float(self.Allsensors[6]),
-            "Canopy_Temp":float(self.Allsensors[7]),"CS_Temp":float(self.Allsensors[8]),"Irrig_Pres_Rate":float(self.PrescIrrig),
-            "Irrig_Pres_Time":float(self.timeIrrig),"Date_Time":dateHour}
-            requests.post(url="http://104.248.53.140:8080/sPostV3.php",json=data)  
+            self.sumSensors = 0
+            for x in range(4,9):
+                self.sumSensors = self.sumSensors + self.sensors.allSensors[x]
 
-            if self.ContsensorReport == 12:
-                self.ContsensorReport=0   
-                try:
-                    self.FireBase.SensorsDoc_ref.update({
-                            u''+f'{str(self.today)}-{datetime.now().hour}:{datetime.now().minute}':{
-                                u'VWC1' :self.sensors.allSensors[0],
-                                u'VWC2' :self.sensors.allSensors[1],
-                                u'VWC3' :self.sensors.allSensors[2],
-                                u'VWC4' :self.sensors.allSensors[3],
-                                u'temperature' :self.sensors.allSensors[4],
-                                u'RH' : self.sensors.allSensors[5],
-                                u'soilTemperature':self.sensors.allSensors[6],
-                                u'CanopyTemperature':self.sensors.allSensors[7],
-                                u'CanopyTemperatureAmb':self.sensors.allSensors[8],
-                            }    
-                        })
-                    print('Sensors Update to Firebase')    
+            if self.sumSensors > 0:
+                now = datetime.now() 
+                dateHour = str(now.strftime("%Y-%m-%d %H:%M:%S")) 
+                self.Allsensors = self.sensors.allSensors
+                data={"user":"Angel",
+                "Treatment": self.numberAgent,
+                "Longitude":float(5.5),
+                "Latitude":float(-78.4),
+                "SM_1":self.Allsensors[0],"SM_2":float(self.Allsensors[1]),"SM_3":float(self.Allsensors[2]),
+                "Env_Temp":float(self.Allsensors[4]),"RH":float(self.Allsensors[5]),"CO2":float(self.Allsensors[6]),
+                "Canopy_Temp":float(self.Allsensors[7]),"CS_Temp":float(self.Allsensors[8]),"Irrig_Pres_Rate":float(self.PrescIrrig),
+                "Irrig_Pres_Time":float(self.timeIrrig),"Date_Time":dateHour}
+                requests.post(url="http://104.248.53.140:8080/sPostV3.php",json=data)  
 
-                except:
-                    print("error update data sensors ")
-                
-            else:
-                self.ContsensorReport+=1    
+                if self.ContsensorReport == 12:
+                    self.ContsensorReport=0   
+                    try:
+                        self.FireBase.SensorsDoc_ref.update({
+                                u''+f'{str(self.today)}-{datetime.now().hour}:{datetime.now().minute}':{
+                                    u'VWC1' :self.sensors.allSensors[0],
+                                    u'VWC2' :self.sensors.allSensors[1],
+                                    u'VWC3' :self.sensors.allSensors[2],
+                                    u'VWC4' :self.sensors.allSensors[3],
+                                    u'temperature' :self.sensors.allSensors[4],
+                                    u'RH' : self.sensors.allSensors[5],
+                                    u'soilTemperature':self.sensors.allSensors[6],
+                                    u'CanopyTemperature':self.sensors.allSensors[7],
+                                    u'CanopyTemperatureAmb':self.sensors.allSensors[8],
+                                }    
+                            })
+                        print('Sensors Update to Firebase')    
+
+                    except:
+                        print("error update data sensors ")
+                    
+                else:
+                    self.ContsensorReport+=1    
 
 
     def calc_volumetricWaterContent(self,adcValue,voltageReference):
