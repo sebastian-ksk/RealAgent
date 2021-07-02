@@ -600,7 +600,8 @@ class AquaCrop_os():
           k=1.011*math.exp(-0.001143*ET_rain)-1.011*math.exp(-0.5208*ET_rain)
         except:
           k=0.0  
-        eff_rain=rain*k
+        #eff_rain=rain*k
+        eff_rain=rain
         d_TAW=((fc1010-pwp1010)/100)*sp_rootdepth*1000
         d_MAD=d_TAW*sp_mae
    
@@ -781,7 +782,8 @@ class AquaCrop_os():
           k=1.011*math.exp(-0.001143*ET_rain)-1.011*math.exp(-0.5208*ET_rain)
         except:
           k=0.0  
-        eff_rain=rain*k
+        #eff_rain=rain*k
+        eff_rain=rain
         ETc=ET*sp_crcoeff
         try:
            
@@ -1139,7 +1141,8 @@ class AquaCrop_os():
             k=1.011*math.exp(-0.001143*ET_rain)-1.011*math.exp(-0.5208*ET_rain)
         except:
             k=0.0            
-        eff_rain=rain*k
+        #eff_rain=rain*k
+        eff_rain=rain
         
         sp_mae=round(d_TAW/d_MAD,2)
         irr_pres_gross = irr_pres_net/Ef # (mm)

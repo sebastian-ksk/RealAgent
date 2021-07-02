@@ -186,13 +186,14 @@ class  calculo_vwc():
             Fc=0
         if str(L)=='nan':
             L=0
-        # if n==1:
+        if depl_1<0:
+            etc=etc*1.5
+# if n==1:
         #     depl_1=((Fc-vwc_1)/100)*L1
         # else:
         #     depl_1=((Fc-vwc_1)/100)*(L-root)    
         depl=depl_1-rain-irr+etc
-        # if depl<0:
-        #     depl=0
+
 
         vwc= Fc-((depl/L)*100)
         return round(depl,3),round(vwc,3),round(depl_1,3),Fc
