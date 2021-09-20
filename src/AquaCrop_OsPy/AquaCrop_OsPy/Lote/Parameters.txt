@@ -13,7 +13,7 @@ DENSITY               1.14
 TYPE SOIL         SiltLoam
 CROP            Potato.CRO
 MODEL               BETTER
-SEEDTIME        2021-03-06
+SEEDTIME        2021-08-07
 DAYS_CROP              121
 PRESCRIPTION             0
 Ks                       0

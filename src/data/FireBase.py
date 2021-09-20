@@ -98,31 +98,32 @@ class FIREBASE_CLASS:
                     "irrigationApplied": 0,
                     "IrrigationState": "off",
                     "IrrigationTime": 0,
+                    "prescriptionDone": "false",
                 }
             )
         doc = self.SensorsDoc_ref.get()
-        if doc.exists:
-            pass
-        else:
-            self.today = date(
-                datetime.now().year, datetime.now().month, datetime.now().day
-            )
-            self.SensorsDoc_ref.set(
-                {
-                    ""
-                    + f"{str(self.today)}-{datetime.now().hour}:{datetime.now().minute}": {
-                        "VWC1": 0,
-                        "VWC2": 0,
-                        "VWC3": 0,
-                        "VWC4": 0,
-                        "temperature": 0,
-                        "RH": 0,
-                        "soilTemperature": 0,
-                        "CanopyTemperature": 0,
-                        "CanopyTemperatureAmb": 0,
-                    },
-                }
-            )
+        # if doc.exists:
+        #     pass
+        # else:
+        #     self.today = date(
+        #         datetime.now().year, datetime.now().month, datetime.now().day
+        #     )
+        #     self.SensorsDoc_ref.set(
+        #         {
+        #             ""
+        #             + f"{str(self.today)}-{datetime.now().hour}:{datetime.now().minute}": {
+        #                 "VWC1": 0,
+        #                 "VWC2": 0,
+        #                 "VWC3": 0,
+        #                 "VWC4": 0,
+        #                 "temperature": 0,
+        #                 "RH": 0,
+        #                 "soilTemperature": 0,
+        #                 "CanopyTemperature": 0,
+        #                 "CanopyTemperatureAmb": 0,
+        #             },
+        #         }
+        #     )
         doc = self.IrrigPropertiesDoc_ref.get()
         if doc.exists:
             self.IrrigP = doc.to_dict()

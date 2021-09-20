@@ -15,24 +15,25 @@ class DocumentsCreate:
         self.seedTime = datetime.strptime(seedDate, "%Y-%m-%d")
         self.EndDaysCrop = endDaysCrop
         self.createDocument(
-            "/home/pi/Desktop/Real_Agent/RealAgent-master/src/AquaCrop_OsPy/AquaCrop_OsPy/Lote/Agent_Better.csv"
+            "/home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy/Lote/Agent_Better.csv"
         )
         self.createDocument(
-            "/home/pi/Desktop/Real_Agent/RealAgent-master/src/AquaCrop_OsPy/AquaCrop_OsPy/Lote/VWC_pres.csv"
+            "/home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy/Lote/VWC_pres.csv"
         )
         self.createDocument(
-            "/home/pi/Desktop/Real_Agent/RealAgent-master/src/AquaCrop_OsPy/AquaCrop_OsPy/Lote/Weather_Station_pres.csv"
+            "/home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy/Lote/Weather_Station_pres.csv"
         )
         self.createClimaticDocument(
             "/home/pi/Desktop/RealAgent/src/AquaCrop_OsPy/AquaCrop_OsPy/Date_Weather_station/Weather_station_2.csv"
         )
 
     def createClimaticDocument(self, directory):
-        if path.isfile(f"{directory}"):
+
+        if path.isfile(directory):
             print("dir exist")
         else:
             with open(
-                f"{directory}",
+                directory,
                 "a",
             ) as dataF:
                 writer = csv.writer(dataF, delimiter="\t")
